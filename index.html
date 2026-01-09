@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Редактор маршрутов</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://api-maps.yandex.ru/2.1/?apikey=ВАШ_API_КЛЮЧ&lang=ru_RU"></script>
+
+<style>
+html,body{margin:0;height:100%;font-family:Arial}
+#map{position:absolute;inset:0}
+
+#panel{
+    position:absolute;right:10px;top:10px;z-index:10;
+    width:360px;max-height:90%;
+    background:rgba(255,255,255,.95);
+    border-radius:8px;padding:8px;overflow:auto
+}
+
+#list{
+    max-height:200px; /* высота блока списка точек */
+    overflow-y:auto;  /* прокрутка */
+    border:1px solid #ccc;
+    padding:2px;
+    margin-top:5px;
+}
+
+#list div{
+    padding:6px;
+    border-bottom:1px solid #ddd;
+    cursor:pointer;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+#list div.active{
+    background:#d0f5d0;font-weight:bold
+}
+
+textarea, input, button{
+    width:100%;
+    margin-top:5px;
+    box-sizing: border-box;
+}
+
+textarea{
+    resize: vertical;
+}
+
+.command-block{
+    margin-bottom:5px;
+    border:1px solid #ccc;
+    padding:3px;
+    border-radius:4px;
+    position: relative;
+}
+.command-block textarea{
+    width:100%;
+    height:40px;
+}
+.command-block button{
+    position:absolute;
+    right:3px;
+    top:3px;
+    width:auto;
+    height:auto;
+    padding:2px 6px;
+    font-size:12px;
+}
+
+#cmdContainer{
+    max-height: 130px; /* 3 команды по 40px + отступы ≈ 130px */
+    overflow-y:auto;
+}
+
+.az-btns button{
+    width:48%;font-size:18px
+}
+
+.coord {
+    margin-top: 5px;
+    font-size: 14px;
+    color: #333;
+}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="panel">
+<b>Маршрут</b>
+<div id="list"></div>
+
+<hr>
+<b>Команды точки</b>
+<div id="cmdContainer"></div>
+<button onclick="addCommand()">➕ Добавить команду</button>
+
+<hr>
+<b>Точка</b>
+<div class="az-btns">
+<button onclick="rotate(-10)">⟲ −10°</button>
+<button onclick="rotate(10)">⟳ +10°</button>
+</div>
+<input id="az" type="number" placeholder="Азимут">
+
+<div class="coord" id="coord">Координаты: — , —</div>
+
+<button onclick="removePoint()">Удалить точку</button>
+<button onclick="exportJSON()">Экспорт JSON</button>
+<button onclick="importJSON()">Импорт JSON</button>
+</div>
+
+<script>
+let map;
+let points = [];
+let current = null;
+
+/* INIT */
+ymaps.ready(()=>{
+    map = new ymaps.Map("map", {
+        center: [56.3399,43.9332],
+        zoom: 18,
+        type: 'yandex#satellite',
+        controls: []
+    });
+
+    map.events.add('click', e=>{
+        const c = e.get('coords');
+        const newPoint = addPoint(c);
+        scrollToCurrentPoint(); // автоскролл к новой точке
+    });
+});
+
+/* SVG стрелки */
+function arrowSVG(a, color){
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+<g transform="rotate(${a},20,20)">
+<polygon points="20,2 28,30 20,24 12,30" fill="${color}"/>
+</g>
+</svg>`);
+}
+
+/* ADD POINT */
+function addPoint(coords){
+    const p = {
+        lat: coords[0],
+        lon: coords[1],
+        azimuth: 0,
+        commands: [''],
+        pm: null
+    };
+
+    p.pm = new ymaps.Placemark(coords, {}, {
+        iconLayout: 'default#image',
+        iconImageHref: arrowSVG(0,'blue'),
+        iconImageSize: [40,40],
+        iconImageOffset: [-20,-20],
+        draggable: true
+    });
+
+    p.pm.events.add('click', () => selectPoint(p));
+    p.pm.events.add('dragstart', () => selectPoint(p));
+    p.pm.events.add('geometrychange', () => {
+        const newCoords = p.pm.geometry.getCoordinates();
+        p.lat = newCoords[0];
+        p.lon = newCoords[1];
+        if(current !== p) selectPoint(p);
+    });
+
+    map.geoObjects.add(p.pm);
+    points.push(p);
+    selectPoint(p);
+    renderList();
+    return p;
+}
+
+/* SELECT POINT */
+function selectPoint(p){
+    current = p;
+    renderCmdContainer();
+    renderList();
+    updateMarker(p);
+    updateCoord();
+    scrollToCurrentPoint(); // автоскролл к выбранной точке
+}
+
+/* LIST OF POINTS */
+function renderList(){
+    list.innerHTML = '';
+    points.forEach(p=>{
+        const d = document.createElement('div');
+        const cmdText = p.commands[0] || '(без команды)';
+        d.textContent = cmdText;
+        if(p===current) d.classList.add('active');
+        d.onclick = ()=>selectPoint(p);
+        list.appendChild(d);
+    });
+}
+
+/* Прокрутка списка к текущей точке */
+function scrollToCurrentPoint(){
+    if(!current) return;
+    const items = list.querySelectorAll('div');
+    const idx = points.indexOf(current);
+    if(items[idx]) items[idx].scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+/* COMMANDS PANEL */
+function renderCmdContainer(){
+    cmdContainer.innerHTML = '';
+    if(!current) return;
+
+    current.commands.forEach((cmd, idx)=>{
+        const block = document.createElement('div');
+        block.className = 'command-block';
+
+        const ta = document.createElement('textarea');
+        ta.value = cmd;
+        ta.oninput = ()=> {
+            current.commands[idx] = ta.value;
+            renderList();
+        };
+        block.appendChild(ta);
+
+        const del = document.createElement('button');
+        del.textContent = '🗑';
+        del.onclick = ()=> {
+            current.commands.splice(idx,1);
+            renderCmdContainer();
+            renderList();
+        };
+        block.appendChild(del);
+
+        cmdContainer.appendChild(block);
+    });
+
+    // Автоскролл к последней команде
+    if(current.commands.length > 0){
+        cmdContainer.scrollTop = cmdContainer.scrollHeight;
+    }
+}
+
+/* COMMANDS MANAGEMENT */
+function addCommand(){
+    if(!current) return;
+    current.commands.push('');
+    renderCmdContainer();
+    renderList();
+}
+
+/* AZIMUTH */
+az.oninput = ()=>{
+    if(!current) return;
+    current.azimuth = ((+az.value % 360)+360)%360;
+    updateMarker(current);
+};
+
+function rotate(d){
+    if(!current) return;
+    current.azimuth = (current.azimuth + d + 360) % 360;
+    az.value = current.azimuth;
+    updateMarker(current);
+}
+
+/* UPDATE MARKER */
+function updateMarker(p){
+    p.pm.options.set('iconImageHref', arrowSVG(p.azimuth, p===current?'green':'blue'));
+}
+
+/* COORD DISPLAY */
+function updateCoord(){
+    if(!current) {
+        coord.textContent = "Координаты: — , —";
+        return;
+    }
+    coord.textContent = `Координаты: ${current.lat.toFixed(6)} , ${current.lon.toFixed(6)}`;
+}
+
+/* REMOVE POINT */
+function removePoint(){
+    if(!current) return;
+    map.geoObjects.remove(current.pm);
+    points = points.filter(p=>p!==current);
+    current=null;
+    updateCoord();
+    renderList();
+    cmdContainer.innerHTML = '';
+}
+
+/* EXPORT JSON */
+function exportJSON() {
+    const data = points.map(p => ({
+        lat: p.lat,
+        lon: p.lon,
+        azimuth: p.azimuth,
+        commands: p.commands
+    }));
+
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob(["\uFEFF" + jsonStr], { type: 'application/json;charset=utf-8' });
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'route.json';
+    a.click();
+}
+
+/* IMPORT JSON */
+function importJSON() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = ev => {
+            try {
+                const imported = JSON.parse(ev.target.result);
+
+                points.forEach(p => map.geoObjects.remove(p.pm));
+                points = [];
+                current = null;
+
+                imported.forEach(p => {
+                    const newPoint = addPoint([p.lat, p.lon]);
+                    newPoint.azimuth = p.azimuth;
+                    newPoint.commands = p.commands.length ? p.commands : [''];
+                    updateMarker(newPoint);
+                });
+
+                renderList();
+                updateCoord();
+                alert('Маршрут успешно импортирован!');
+            } catch (err) {
+                alert('Ошибка при чтении JSON: ' + err);
+            }
+        };
+        reader.readAsText(file, 'UTF-8');
+    };
+    input.click();
+}
+</script>
+</body>
+</html>
