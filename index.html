@@ -4,186 +4,207 @@
 <meta charset="utf-8">
 <title>Редактор маршрутов</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://api-maps.yandex.ru/2.1/?apikey=ВАШ_API_КЛЮЧ&lang=ru_RU"></script>
-
+<script src="https://api-maps.yandex.ru/2.1/?apikey=YANDEX_API_KEY&lang=ru_RU"></script>
 <style>
-html, body {margin:0; height:100%; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
-#map {position:absolute; inset:0;}
+html,body{margin:0;height:100%;font-family:'Inter',Arial}
+#map{position:absolute;inset:0}
 
-/* Панель */
-#panel {
-    position:absolute; right:0; top:0; z-index:10;
-    width: min(380px, 90%);
-    max-width:90%;
-    max-height:90%;
-    background: rgba(255,255,255,0.85);
-    border-radius:16px; padding:16px;
-    box-shadow: 0 12px 32px rgba(0,0,0,0.2);
-    overflow:auto;
-    transition: transform 0.3s ease, width 0.3s ease;
-    min-width:200px;
-}
-@media (max-width: 500px) {
-    #panel { width:100%; left:0; right:0; border-radius:0; }
-}
-
-#togglePanelBtn {
+/* ===== PANEL ===== */
+#panel{
     position:absolute;
-    top:10px; right:10px; z-index:20;
-    width:36px; height:36px;
-    border:none; border-radius:50%;
-    background:#4CAF50; color:white; font-size:20px;
-    cursor:pointer; display:flex; align-items:center; justify-content:center;
-    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+    right:10px; top:10px;
+    width:360px;
+    max-width:95%;
+    background:rgba(255,255,255,0.28);
+    backdrop-filter:blur(20px);
+    border-radius:16px;
+    padding:16px;
+    z-index:1000;
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
+    transition:transform .3s ease, opacity .3s ease;
 }
-#togglePanelBtn:hover {background:#45a049;}
-
-/* Кнопки азимута */
-.az-btns {display:flex; gap:8px; margin-bottom:8px;}
-.az-btns button {
-    flex:1; font-size:20px; padding:12px;
-    border:none; border-radius:10px;
-    background:#4CAF50; color:white; cursor:pointer;
-    transition: background 0.2s;
+#panel.collapsed{
+    transform:translateX(110%);
+    opacity:0.3;
 }
-.az-btns button:hover {background:#45a049;}
 
-/* Координаты */
-.coord {margin-top:8px; font-size:14px; color:#555;}
-
-/* Команды точки */
-.commands-display {
-    margin-top:10px;
-    padding:8px;
-    background:#f0f0f0;
-    border-radius:10px;
+/* ===== TOGGLE BUTTON ===== */
+#panelToggle{
+    position:fixed;
+    top:12px;
+    right:12px;
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#4a90e2,#2f80ed);
+    color:white;
+    border:none;
     cursor:pointer;
-    white-space: pre-wrap;
-    min-height:40px;
+    font-size:22px;
+    z-index:1001;
+    box-shadow:0 4px 12px rgba(0,0,0,0.35);
+    transition:background .3s ease, transform .2s ease;
 }
-.commands-display:hover {background:#e0e0e0;}
+#panelToggle:hover{background:linear-gradient(135deg,#6aa6f3,#3f90ff);}
 
-/* Поле и кнопка добавления команды */
-.add-command-container { display:flex; gap:6px; margin-top:8px; }
-.add-command-container input { flex:1; padding:8px; border-radius:8px; border:1px solid #ccc; font-size:14px; }
-.add-command-container button { flex:none; width:50px; font-size:18px; padding:0; border:none; border-radius:8px; background:#4CAF50; color:white; cursor:pointer; }
-.add-command-container button:hover { background:#45a049; }
-
-/* Кнопки панели */
-button.panel-btn {
-    padding:8px; border:none; border-radius:10px;
-    background:#4CAF50; color:white; font-size:14px;
-    cursor:pointer; margin-top:6px; width:100%;
-    transition: background 0.2s;
+/* ===== UI ELEMENTS ===== */
+button,input{
+    margin-top:8px;
+    border-radius:12px;
+    font-size:14px;
+    padding:10px;
+    border:1px solid rgba(0,0,0,0.15);
+    outline:none;
+    transition:all .2s ease;
 }
-button.panel-btn:hover {background:#45a049;}
+input:focus{border-color:#2f80ed;box-shadow:0 0 8px rgba(47,128,237,0.4);}
+button{background:#2f80ed;color:white;border:none;cursor:pointer;}
+button.secondary{background:#aaa}
+button.danger{background:#e74c3c}
+button:hover{opacity:0.85}
 
-/* Выпадающий список команд */
-.command-dropdown {
-    position: absolute;
+/* ===== Azimuth Buttons ===== */
+.az-row{display:flex;gap:8px}
+.az-row button{height:56px;font-size:20px;flex:1;}
+
+/* ===== Info Field ===== */
+.info{
+    margin-top:8px;
+    font-size:14px;
+    white-space:pre-line;
+    cursor:pointer;
+    padding:10px;
+    border-radius:12px;
+    background:rgba(0,0,0,0.05);
+    transition:background .2s ease;
+}
+.info:hover{background:rgba(0,0,0,0.08);}
+
+/* ===== COMMAND DROPDOWN ===== */
+.command-dropdown{
+    position:fixed;
     right:10px;
     top:10px;
-    width:380px;
-    max-height:90vh;
-    overflow-y:auto;
-    background: #ffffff;
-    padding:16px;
+    width:360px;
+    max-width:95%;
+    max-height:calc(100vh - 20px);
+    background:rgba(255,255,255,0.95);
     border-radius:16px;
-    box-shadow: 0 12px 32px rgba(0,0,0,0.2);
-    z-index:1001;
-    transform: translateY(-10px);
-    opacity:0;
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    padding:16px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.35);
+    overflow:auto;
+    z-index:1000;
+    display:flex;
+    flex-direction:column;
+    transition:opacity .3s ease;
 }
-.command-dropdown.show {transform: translateY(0); opacity:1;}
+.command-dropdown label{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    padding:8px 6px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:background .2s ease;
+}
+.command-dropdown label:hover{background:rgba(47,128,237,0.08);}
+.command-dropdown input[type=checkbox]{width:18px;height:18px;}
 
-.command-dropdown label {
-    display:flex; align-items:center; margin:6px 0;
-    cursor:pointer; font-size:14px; border-radius:6px; padding:4px 6px;
-    transition: background 0.2s;
+/* Command buttons inside dropdown */
+.cmd-buttons{
+    display:flex;
+    gap:12px;
+    margin-top:12px;
 }
-.command-dropdown label:hover {background: rgba(76,175,80,0.1);}
-.command-dropdown input[type="checkbox"] {
-    appearance:none; width:20px; height:20px; border:2px solid #ccc;
-    border-radius:50%; margin-right:10px; position:relative;
-    transition:border-color 0.3s, background-color 0.3s;
+.cmd-buttons button{
+    flex:1;
+    padding:10px 0;
+    font-weight:bold;
+    border-radius:12px;
 }
-.command-dropdown input[type="checkbox"]:checked {
-    border-color:#4CAF50; background-color:#4CAF50;
-}
-.command-dropdown input[type="checkbox"]:checked::after {
-    content:''; position:absolute; top:4px; left:4px; width:8px; height:8px; border-radius:50%; background:#fff;
-}
-.command-dropdown input[type="checkbox"]:checked + span { color:#4CAF50; font-weight:500; }
-.command-dropdown span { user-select:none; }
+.cmd-buttons button.secondary{background:#aaa;}
+.cmd-buttons button:hover{opacity:0.9;}
 </style>
 </head>
 <body>
 
 <div id="map"></div>
-<button id="togglePanelBtn" onclick="togglePanel()">☰</button>
+
+<!-- Кнопка управления панелью -->
+<button id="panelToggle" onclick="togglePanel()">⮜</button>
 
 <div id="panel">
-    <div class="az-btns">
-        <button onclick="rotate(-10)">⟲ −10°</button>
-        <button onclick="rotate(10)">⟳ +10°</button>
-    </div>
-    <div class="coord" id="coord">Координаты: — , — | Азимут: —°</div>
-    <div class="commands-display" onclick="toggleCommandDropdown()">(нет команд)</div>
+    <div class="info" id="pointInfo" onclick="toggleCommandDropdown()">Точка не выбрана</div>
 
-    <!-- Поле ввода команды с кнопкой справа -->
-    <div class="add-command-container">
-        <input type="text" id="customCommandInput" placeholder="Введите новую команду...">
-        <button onclick="addCustomCommand()">✅</button>
+    <div class="az-row">
+        <button onclick="rotate(-10)">⟲</button>
+        <button onclick="rotate(10)">⟳</button>
     </div>
 
-    <button class="panel-btn" onclick="removePoint()">Удалить точку</button>
+    <div class="info" id="coordInfo">—</div>
+
+    <div style="display:flex;gap:6px">
+        <input id="customCmd" placeholder="Добавить команду">
+        <button style="width:60px" onclick="addCustomCommand()">✅</button>
+    </div>
+
+    <button class="danger" onclick="removePoint()">Удалить точку</button>
+
     <hr>
-    <button class="panel-btn" onclick="exportJSON()">Экспорт JSON</button>
-    <button class="panel-btn" onclick="importJSON()">Импорт JSON</button>
+    <button onclick="exportJSON()">📤 Экспорт JSON</button>
+    <button onclick="importJSON()">📥 Импорт JSON</button>
+
     <hr>
-    <button class="panel-btn" onclick="updateGist()">💾 Обновить Gist</button>
-    <button class="panel-btn" onclick="loadFromGist()">📥 Загрузить из Gist</button>
+    <button onclick="updateGist()">💾 Обновить Gist</button>
 </div>
 
 <script>
 let map, points=[], current=null;
-const GITHUB_TOKEN='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';
+let panelCollapsed=false;
+const GITHUB_TOKEN='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';
 const GIST_ID='c4b196bd97194e06592b94646e02118b';
 const GIST_FILENAME='all.json';
-const COMMAND_OPTIONS=[
-    'На перекрестке повернем налево','На перекрестке поедем прямо','На перекрестке повернем направо',
-    'На перекрестке выполним разворот','На круговом движении первый съезд','На круговом движении второй съезд',
-    'На круговом движении третий съезд','На круговом движении четвертый съезд',
-    'Выполним разворот вне перекрестка','Выполним разворот в ближайшем месте',
-    'На ближайшем повороте повернем направо','На ближайшем повороте повернем налево',
-    'Найдите место для остановки и остановитесь','Выполняем остановку параллельно краю проезжей части',
-    'Выполняем разгон до максимальной скорости','Набираем максимальную скорость на данном участке дороги',
-    'Выполним разворот в ограниченном пространстве','Выполним остановку и начало движения на подъеме'
+
+const COMMANDS=[
+'На перекрестке повернем налево','На перекрестке поедем прямо','На перекрестке повернем направо','На перекрестке выполним разворот',
+'На круговом движении первый съезд','На круговом движении второй съезд','На круговом движении третий съезд','На круговом движении четвертый съезд',
+'Выполним разворот вне перекрестка','Выполним разворот в ближайшем месте',
+'На ближайшем повороте повернем направо','На ближайшем повороте повернем налево',
+'Найдите место для остановки и остановитесь','Выполняем остановку параллельно краю проезжей части',
+'Выполняем разгон до максимальной скорости','Набираем максимальную скорость на данном участке дороги',
+'Выполним разворот в ограниченном пространстве','Выполним остановку и начало движения на подъеме'
 ];
 
-const coord=document.getElementById('coord');
-const commandsDisplay=document.querySelector('.commands-display');
-const panel=document.getElementById('panel');
-let panelVisible=true;
-
-ymaps.ready(()=>{
-    map=new ymaps.Map("map",{center:[56.3399,43.9332],zoom:18,type:'yandex#satellite',controls:[]});
-    map.events.add('click',e=>addPoint(e.get('coords')));
-});
-
-function arrowSVG(a,color){
-    return 'data:image/svg+xml;utf8,'+encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">
-            <g transform="rotate(${a},20,20)">
-                <polygon points="20,2 28,30 20,24 12,30" fill="${color}" stroke="black" stroke-width="1"/>
-            </g>
-        </svg>`);
+function togglePanel(){
+    const p=document.getElementById('panel');
+    const b=document.getElementById('panelToggle');
+    panelCollapsed=!panelCollapsed;
+    p.classList.toggle('collapsed',panelCollapsed);
+    b.textContent=panelCollapsed?'⮞':'⮜';
 }
 
-function addPoint(coords){
-    const p={lat:coords[0],lon:coords[1],azimuth:0,commands:[],pm:null};
-    p.pm=new ymaps.Placemark(coords,{},{
+/* ===== MAP INIT ===== */
+ymaps.ready(async ()=>{
+    map=new ymaps.Map("map",{center:[56.3399,43.9332],zoom:18,type:'yandex#satellite',controls:[]});
+    map.events.add('click',e=>addPoint(e.get('coords')));
+    await loadFromGist(true);
+    setInterval(autoSaveGist,10000);
+});
+
+/* SVG стрелки с черной окантовкой */
+function arrowSVG(a,color){
+return 'data:image/svg+xml;utf8,'+encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+<g transform="rotate(${a},20,20)">
+<polygon points="20,2 28,30 20,24 12,30" fill="${color}" stroke="black" stroke-width="1"/>
+</g>
+</svg>`);
+}
+
+/* ===== POINTS ===== */
+function addPoint(c){
+    const p={lat:c[0],lon:c[1],azimuth:0,commands:[],pm:null};
+    p.pm=new ymaps.Placemark(c,{},{
         iconLayout:'default#image',
         iconImageHref:arrowSVG(0,'gray'),
         iconImageSize:[40,40],
@@ -191,97 +212,129 @@ function addPoint(coords){
         draggable:true
     });
     p.pm.events.add('click',()=>selectPoint(p));
-    p.pm.events.add('dragstart',()=>selectPoint(p));
-    p.pm.events.add('geometrychange',()=>{
-        const c=p.pm.geometry.getCoordinates();
-        p.lat=c[0]; p.lon=c[1];
-        if(current!==p) selectPoint(p);
-    });
     map.geoObjects.add(p.pm);
     points.push(p);
     selectPoint(p);
-    updateAllMarkers();
+    return p;
 }
 
-function selectPoint(p){current=p; updateCoord(); updateCommandsDisplay(); updateAllMarkers();}
-function rotate(d){if(!current)return; current.azimuth=(current.azimuth+d+360)%360; updateCoord(); updateAllMarkers();}
+function selectPoint(p){current=p;updateInfo();updateAllMarkers();}
+function removePoint(){
+    if(!current) return;
+    map.geoObjects.remove(current.pm);
+    points=points.filter(x=>x!==current);
+    current=null;updateInfo();updateAllMarkers();
+}
+
+/* ===== UI ===== */
+function updateInfo(){
+    const i=document.getElementById('pointInfo');
+    const c=document.getElementById('coordInfo');
+    if(!current){i.textContent='Точка не выбрана';c.textContent='—';return;}
+    i.textContent=current.commands.length?current.commands.join('\n'):'(нет команд)';
+    c.textContent=`${current.lat.toFixed(6)}, ${current.lon.toFixed(6)}\nАзимут: ${current.azimuth}°`;
+}
+
+function rotate(d){
+    if(!current) return;
+    current.azimuth=(current.azimuth+d+360)%360;
+    updateAllMarkers();updateInfo();
+}
+
 function updateAllMarkers(){
     points.forEach(p=>{
-        let color;
-        if(p===current) color='green';
-        else if(!p.commands||p.commands.length===0) color='gray';
-        else color='blue';
-        p.pm.options.set('iconImageHref',arrowSVG(p.azimuth,color));
+        let col='gray';
+        if(p.commands.length) col='blue';
+        if(p===current) col='green';
+        p.pm.options.set('iconImageHref',arrowSVG(p.azimuth,col));
     });
 }
-function updateCoord(){coord.textContent=current?`Координаты: ${current.lat.toFixed(6)} , ${current.lon.toFixed(6)} | Азимут: ${current.azimuth}°`:'Координаты: — , — | Азимут: —°';}
-function updateCommandsDisplay(){commandsDisplay.textContent=!current||current.commands.length===0?'(нет команд)':current.commands.join('\n');}
-function removePoint(){if(!current)return; map.geoObjects.remove(current.pm); points=points.filter(p=>p!==current); current=null; updateCoord(); updateCommandsDisplay(); updateAllMarkers();}
 
-// Добавление своей команды
+/* ===== COMMANDS DROPDOWN ===== */
+function toggleCommandDropdown(){
+    if(!current) return;
+    let d=document.querySelector('.command-dropdown');
+    if(d){d.remove();return;}
+    d=document.createElement('div');
+    d.className='command-dropdown';
+    d.style.width=document.getElementById('panel').offsetWidth+'px';
+    d.style.maxHeight=(window.innerHeight-20)+'px';
+    COMMANDS.forEach(c=>{
+        const l=document.createElement('label');
+        const cb=document.createElement('input');
+        cb.type='checkbox';
+        cb.checked=current.commands.includes(c);
+        l.appendChild(cb); l.appendChild(document.createTextNode(c));
+        d.appendChild(l);
+    });
+    const btns=document.createElement('div'); btns.className='cmd-buttons';
+    const ok=document.createElement('button'); ok.textContent='Готово';
+    ok.onclick=()=>{current.commands=[...d.querySelectorAll('input:checked')].map(x=>x.parentNode.textContent.trim()); updateInfo(); updateAllMarkers(); d.remove();};
+    const cancel=document.createElement('button'); cancel.textContent='Отмена'; cancel.className='secondary';
+    cancel.onclick=()=>d.remove();
+    btns.append(ok,cancel); d.appendChild(btns);
+    document.body.appendChild(d);
+}
+
 function addCustomCommand(){
     if(!current) return;
-    const input = document.getElementById('customCommandInput');
-    const val = input.value.trim();
-    if(!val) return;
-    current.commands.push(val);
-    input.value='';
-    updateCommandsDisplay();
+    const i=document.getElementById('customCmd');
+    if(!i.value.trim()) return;
+    current.commands.push(i.value.trim());
+    i.value='';updateInfo();updateAllMarkers();
+}
+
+/* ===== JSON ===== */
+function exportJSON(){
+    const data=points.map(p=>({lat:p.lat,lon:p.lon,azimuth:p.azimuth,commands:p.commands}));
+    const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='route.json'; a.click();
+}
+
+function importJSON(){
+    const i=document.createElement('input'); i.type='file'; i.accept='.json';
+    i.onchange=e=>{
+        const r=new FileReader();
+        r.onload=()=>{
+            points.forEach(p=>map.geoObjects.remove(p.pm));
+            points=[];
+            JSON.parse(r.result).forEach(p=>{
+                const np=addPoint([p.lat,p.lon]);
+                np.azimuth=p.azimuth||0;
+                np.commands=p.commands||[];
+            });
+            updateAllMarkers();
+        };
+        r.readAsText(e.target.files[0]);
+    };
+    i.click();
+}
+
+/* ===== GIST ===== */
+async function updateGist(){
+    const data=points.map(p=>({lat:p.lat,lon:p.lon,azimuth:p.azimuth,commands:p.commands}));
+    await fetch(`https://api.github.com/gists/${GIST_ID}`,{
+        method:'PATCH',
+        headers:{'Authorization':'Bearer '+GITHUB_TOKEN,'Content-Type':'application/json'},
+        body:JSON.stringify({files:{[GIST_FILENAME]:{content:JSON.stringify(data,null,2)}}})
+    });
+}
+
+async function loadFromGist(){
+    const r=await fetch(`https://api.github.com/gists/${GIST_ID}`,{headers:{'Authorization':'Bearer '+GITHUB_TOKEN}});
+    const g=await r.json();
+    if(!g.files[GIST_FILENAME]) return;
+    points.forEach(p=>map.geoObjects.remove(p.pm));
+    points=[];
+    JSON.parse(g.files[GIST_FILENAME].content).forEach(p=>{
+        const np=addPoint([p.lat,p.lon]);
+        np.azimuth=p.azimuth||0;
+        np.commands=p.commands||[];
+    });
     updateAllMarkers();
 }
 
-// Выпадающий список команд с кнопками "Готово" и "Отмена"
-function toggleCommandDropdown(){
-    if(!current) return;
-    const existing=document.querySelector('.command-dropdown');
-    if(existing){existing.classList.remove('show'); setTimeout(()=>existing.remove(),300); return;}
-
-    const panelRect=panel.getBoundingClientRect();
-    const dropdown=document.createElement('div');
-    dropdown.className='command-dropdown';
-    dropdown.style.top=panelRect.top+'px';
-    dropdown.style.right=(window.innerWidth-panelRect.right)+'px';
-    dropdown.style.width=panelRect.width+'px';
-    dropdown.style.maxHeight=(window.innerHeight-panelRect.top-10)+'px';
-
-    COMMAND_OPTIONS.forEach(option=>{
-        const label=document.createElement('label');
-        const cb=document.createElement('input'); cb.type='checkbox'; cb.value=option; cb.checked=current.commands.includes(option);
-        const span=document.createElement('span'); span.textContent=option;
-        label.appendChild(cb); label.appendChild(span);
-        dropdown.appendChild(label);
-    });
-
-    // Контейнер кнопок "Готово" и "Отмена"
-    const btnContainer=document.createElement('div');
-    btnContainer.style.display='flex'; btnContainer.style.gap='8px'; btnContainer.style.marginTop='12px';
-
-    const doneBtn=document.createElement('button');
-    doneBtn.textContent='Готово';
-    doneBtn.style.cssText='flex:1;padding:10px;font-size:16px;border:none;border-radius:10px;background:#4CAF50;color:white;cursor:pointer;';
-    doneBtn.onclick=()=>{
-        const selected=[]; dropdown.querySelectorAll('input:checked').forEach(c=>selected.push(c.value));
-        current.commands=selected; updateCommandsDisplay(); updateAllMarkers();
-        dropdown.classList.remove('show'); setTimeout(()=>dropdown.remove(),300);
-    };
-    btnContainer.appendChild(doneBtn);
-
-    const cancelBtn=document.createElement('button');
-    cancelBtn.textContent='Отмена';
-    cancelBtn.style.cssText='flex:1;padding:10px;font-size:16px;border:none;border-radius:10px;background:#ccc;color:white;cursor:pointer;';
-    cancelBtn.onclick=()=>{
-        dropdown.classList.remove('show'); setTimeout(()=>dropdown.remove(),300);
-    };
-    btnContainer.appendChild(cancelBtn);
-
-    dropdown.appendChild(btnContainer);
-    document.body.appendChild(dropdown);
-    setTimeout(()=>dropdown.classList.add('show'),10);
-}
-
-// Скрытие/показ панели
-function togglePanel(){panelVisible=!panelVisible; if(panelVisible) panel.style.transform='translateX(0)'; else panel.style.transform='translateX(420px)';}
+function autoSaveGist(){ if(points.length) updateGist(); }
 </script>
-
 </body>
 </html>
