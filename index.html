@@ -8,70 +8,143 @@
 <script src="https://api-maps.yandex.ru/2.1/?apikey=ВАШ_API_КЛЮЧ&lang=ru_RU"></script>
 
 <style>
-html,body{margin:0;height:100%;font-family:Arial}
-#map{position:absolute;inset:0}
+html, body {margin:0;height:100%;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5;}
+#map {position:absolute; inset:0;}
 
-#panel{
-    position:absolute;right:10px;top:10px;z-index:10;
-    width:360px;max-height:90%;
-    background:rgba(255,255,255,.95);
-    border-radius:8px;padding:8px;overflow:auto
+/* Панель точки */
+#panel {
+    position:absolute; right:10px; top:10px; z-index:10;
+    width:380px; max-height:90%;
+    background: #ffffff;
+    border-radius:16px; padding:16px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+    overflow:auto;
 }
 
-#list{
-    max-height:200px;
-    overflow-y:auto;
-    border:1px solid #ccc;
-    padding:2px;
-    margin-top:5px;
+/* Кнопки управления азимутом */
+.az-btns {
+    display:flex;
+    gap:8px;
+    margin-bottom:8px;
 }
 
-#list div{
-    padding:6px;
-    border-bottom:1px solid #ddd;
+.az-btns button {
+    flex:1;
+    font-size:20px;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:#4CAF50;
+    color:white;
     cursor:pointer;
-    word-break: break-word;
-}
-#list div.active{
-    background:#d0f5d0;font-weight:bold
+    transition: background 0.2s;
 }
 
-input, button, select{
-    width:100%;
-    margin-top:5px;
-    box-sizing:border-box;
-}
+.az-btns button:hover {background:#45a049;}
 
-.command-block{
-    margin-bottom:5px;
-    border:1px solid #ccc;
-    padding:3px;
-    border-radius:4px;
-    position:relative;
-}
-
-.command-block button{
-    position:absolute;
-    right:3px;
-    top:3px;
-    width:auto;
-    padding:2px 6px;
-    font-size:12px;
-}
-
-#cmdContainer{
-    max-height:150px;
-    overflow-y:auto;
-}
-
-.az-btns button{
-    width:48%;font-size:18px
-}
-
-.coord{
-    margin-top:5px;
+/* Координаты + азимут */
+.coord {
+    margin-top:8px;
     font-size:14px;
+    color:#555;
 }
+
+/* Команды текущей точки */
+.commands-display {
+    margin-top:10px;
+    padding:8px;
+    background:#f0f0f0;
+    border-radius:10px;
+    cursor:pointer;
+    white-space: pre-wrap;
+    min-height:40px;
+}
+
+.commands-display:hover {background:#e0e0e0;}
+
+/* Кнопки панели */
+button.panel-btn {
+    padding:8px;
+    border:none;
+    border-radius:10px;
+    background:#4CAF50;
+    color:white;
+    font-size:14px;
+    cursor:pointer;
+    margin-top:6px;
+    width:100%;
+    transition: background 0.2s;
+}
+
+button.panel-btn:hover {background:#45a049;}
+
+/* Выпадающий список команд над панелью */
+.command-dropdown {
+    position: absolute;
+    right:10px;
+    top:10px;
+    width:380px;
+    max-height:90vh;
+    overflow-y:auto;
+    background: #ffffff;
+    padding: 16px;
+    border-radius:16px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+    z-index:1001;
+    transform: translateY(-10px);
+    opacity:0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.command-dropdown.show {transform: translateY(0); opacity:1;}
+
+/* Чекбоксы */
+.command-dropdown label {
+    display:flex;
+    align-items:center;
+    margin:6px 0;
+    cursor:pointer;
+    font-size:14px;
+    border-radius:6px;
+    padding:4px 6px;
+    transition: background 0.2s;
+}
+
+.command-dropdown label:hover {background: rgba(76, 175, 80, 0.1);}
+
+.command-dropdown input[type="checkbox"] {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    margin-right: 10px;
+    position: relative;
+    transition: border-color 0.3s, background-color 0.3s;
+}
+
+.command-dropdown input[type="checkbox"]:checked {
+    border-color: #4CAF50;
+    background-color: #4CAF50;
+}
+
+.command-dropdown input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    top:4px;
+    left:4px;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#fff;
+}
+
+.command-dropdown input[type="checkbox"]:checked + span {
+    color:#4CAF50;
+    font-weight:500;
+}
+
+.command-dropdown span {user-select: none;}
 </style>
 </head>
 <body>
@@ -79,34 +152,24 @@ input, button, select{
 <div id="map"></div>
 
 <div id="panel">
-<b>Маршрут</b>
-<div id="list"></div>
-
-<hr>
-<b>Команды точки</b>
-<div id="cmdContainer"></div>
-<button onclick="addCommand()">➕ Добавить команду</button>
-
-<hr>
-<b>Точка</b>
 <div class="az-btns">
 <button onclick="rotate(-10)">⟲ −10°</button>
 <button onclick="rotate(10)">⟳ +10°</button>
 </div>
-<input id="az" type="number" placeholder="Азимут">
-<div class="coord" id="coord">Координаты: — , —</div>
 
-<button onclick="removePoint()">Удалить точку</button>
+<div class="coord" id="coord">Координаты: — , — | Азимут: —°</div>
 
-<hr>
-<b>JSON</b>
-<button onclick="exportJSON()">Экспорт JSON</button>
-<button onclick="importJSON()">Импорт JSON</button>
+<div class="commands-display" onclick="toggleCommandDropdown()">(нет команд)</div>
+
+<button class="panel-btn" onclick="removePoint()">Удалить точку</button>
 
 <hr>
-<b>GitHub Gist</b>
-<button onclick="updateGist()">💾 Обновить Gist</button>
-<button onclick="loadFromGist()">📥 Загрузить из Gist</button>
+<button class="panel-btn" onclick="exportJSON()">Экспорт JSON</button>
+<button class="panel-btn" onclick="importJSON()">Импорт JSON</button>
+
+<hr>
+<button class="panel-btn" onclick="updateGist()">💾 Обновить Gist</button>
+<button class="panel-btn" onclick="loadFromGist()">📥 Загрузить из Gist</button>
 </div>
 
 <script>
@@ -114,90 +177,63 @@ let map;
 let points = [];
 let current = null;
 
-/* === GITHUB GIST (ВАРИАНТ 2) === */
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = 'PASTE_YOUR_GITHUB_TOKEN_HERE';
 const GIST_ID = 'c4b196bd97194e06592b94646e02118b';
 const GIST_FILENAME = 'all.json';
 
-/* === СПИСОК КОМАНД === */
 const COMMAND_OPTIONS = [
     'На перекрестке повернем налево',
     'На перекрестке поедем прямо',
     'На перекрестке повернем направо',
     'На перекрестке выполним разворот',
-
     'На круговом движении первый съезд',
     'На круговом движении второй съезд',
     'На круговом движении третий съезд',
     'На круговом движении четвертый съезд',
-
     'Выполним разворот вне перекрестка',
     'Выполним разворот в ближайшем месте',
-
     'На ближайшем повороте повернем направо',
     'На ближайшем повороте повернем налево',
-
     'Найдите место для остановки и остановитесь',
     'Выполняем остановку параллельно краю проезжей части',
-
     'Выполняем разгон до максимальной скорости',
     'Набираем максимальную скорость на данном участке дороги',
-
     'Выполним разворот в ограниченном пространстве',
     'Выполним остановку и начало движения на подъеме'
 ];
 
-let list, cmdContainer, az, coord;
+const coord = document.getElementById('coord');
+const commandsDisplay = document.querySelector('.commands-display');
 
-window.onload=()=>{
-    list=document.getElementById('list');
-    cmdContainer=document.getElementById('cmdContainer');
-    az=document.getElementById('az');
-    coord=document.getElementById('coord');
-};
-
-/* INIT MAP */
 ymaps.ready(()=>{
-    map=new ymaps.Map("map",{
+    map = new ymaps.Map("map", {
         center:[56.3399,43.9332],
         zoom:18,
         type:'yandex#satellite',
         controls:[]
     });
 
-    map.events.add('click',e=>{
-        addPoint(e.get('coords'));
-    });
+    map.events.add('click', e => { addPoint(e.get('coords')); });
 });
 
-/* SVG ARROW */
 function arrowSVG(a,color){
-    return 'data:image/svg+xml;utf8,'+encodeURIComponent(`
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">
-<g transform="rotate(${a},20,20)">
-<polygon points="20,2 28,30 20,24 12,30" fill="${color}"/>
-</g>
+  <g transform="rotate(${a},20,20)">
+    <polygon points="20,2 28,30 20,24 12,30" fill="${color}" stroke="black" stroke-width="1"/>
+  </g>
 </svg>`);
 }
 
-/* ADD POINT */
 function addPoint(coords){
-    const p={
-        lat:coords[0],
-        lon:coords[1],
-        azimuth:0,
-        commands:[''],
-        pm:null
-    };
-
+    const p={lat:coords[0],lon:coords[1],azimuth:0,commands:[],pm:null};
     p.pm=new ymaps.Placemark(coords,{},{
         iconLayout:'default#image',
-        iconImageHref:arrowSVG(0,'blue'),
+        iconImageHref:arrowSVG(0,'white'),
         iconImageSize:[40,40],
         iconImageOffset:[-20,-20],
         draggable:true
     });
-
     p.pm.events.add('click',()=>selectPoint(p));
     p.pm.events.add('dragstart',()=>selectPoint(p));
     p.pm.events.add('geometrychange',()=>{
@@ -205,205 +241,148 @@ function addPoint(coords){
         p.lat=c[0]; p.lon=c[1];
         if(current!==p) selectPoint(p);
     });
-
     map.geoObjects.add(p.pm);
     points.push(p);
     selectPoint(p);
-    renderList();
+    updateAllMarkers();
 }
 
-/* SELECT */
 function selectPoint(p){
     current=p;
-    az.value=p.azimuth;
-    renderCmdContainer();
-    renderList();
-    updateMarker(p);
     updateCoord();
+    updateCommandsDisplay();
+    updateAllMarkers();
 }
-
-/* LIST */
-function renderList(){
-    list.innerHTML='';
-    points.forEach(p=>{
-        const d=document.createElement('div');
-        d.textContent=p.commands[0]||'(без команды)';
-        if(p===current) d.classList.add('active');
-        d.onclick=()=>selectPoint(p);
-        list.appendChild(d);
-    });
-}
-
-/* COMMANDS */
-function renderCmdContainer(){
-    cmdContainer.innerHTML='';
-    if(!current) return;
-
-    current.commands.forEach((cmd,i)=>{
-        const b=document.createElement('div');
-        b.className='command-block';
-
-        const sel=document.createElement('select');
-
-        const empty=document.createElement('option');
-        empty.value='';
-        empty.textContent='— выберите команду —';
-        sel.appendChild(empty);
-
-        COMMAND_OPTIONS.forEach(t=>{
-            const o=document.createElement('option');
-            o.value=t;
-            o.textContent=t;
-            sel.appendChild(o);
-        });
-
-        sel.value=cmd||'';
-        sel.onchange=()=>{
-            current.commands[i]=sel.value;
-            renderList();
-        };
-
-        const del=document.createElement('button');
-        del.textContent='🗑';
-        del.onclick=()=>{
-            current.commands.splice(i,1);
-            renderCmdContainer();
-            renderList();
-        };
-
-        b.appendChild(sel);
-        b.appendChild(del);
-        cmdContainer.appendChild(b);
-    });
-}
-
-function addCommand(){
-    if(!current) return;
-    current.commands.push('');
-    renderCmdContainer();
-}
-
-/* AZIMUTH */
-az.oninput=()=>{
-    if(!current) return;
-    current.azimuth=((+az.value%360)+360)%360;
-    updateMarker(current);
-};
 
 function rotate(d){
     if(!current) return;
     current.azimuth=(current.azimuth+d+360)%360;
-    az.value=current.azimuth;
-    updateMarker(current);
+    updateCoord();
+    updateAllMarkers();
 }
 
-function updateMarker(p){
-    p.pm.options.set(
-        'iconImageHref',
-        arrowSVG(p.azimuth,p===current?'green':'blue')
-    );
+function updateAllMarkers(){
+    points.forEach(p=>{
+        let color;
+        if(p===current) color='green';
+        else if(!p.commands || p.commands.length===0) color='gray'; // <-- изменено с white на gray
+        else color='blue';
+        p.pm.options.set('iconImageHref', arrowSVG(p.azimuth,color));
+    });
 }
 
-/* COORD */
+
 function updateCoord(){
     coord.textContent=current
-        ?`Координаты: ${current.lat.toFixed(6)} , ${current.lon.toFixed(6)}`
-        :'Координаты: — , —';
+        ? `Координаты: ${current.lat.toFixed(6)} , ${current.lon.toFixed(6)} | Азимут: ${current.azimuth}°`
+        : 'Координаты: — , — | Азимут: —°';
 }
 
-/* REMOVE */
+function updateCommandsDisplay(){
+    if(!current) commandsDisplay.textContent = '(нет команд)';
+    else commandsDisplay.textContent = current.commands.length ? current.commands.join('\n') : '(нет команд)';
+}
+
 function removePoint(){
     if(!current) return;
     map.geoObjects.remove(current.pm);
-    points=points.filter(p=>p!==current);
-    current=null;
-    renderList();
-    cmdContainer.innerHTML='';
+    points = points.filter(p=>p!==current);
+    current = null;
     updateCoord();
+    updateCommandsDisplay();
+    updateAllMarkers();
 }
 
-/* JSON */
 function exportJSON(){
-    const data=points.map(p=>({
-        lat:p.lat,lon:p.lon,azimuth:p.azimuth,commands:p.commands
-    }));
-    const blob=new Blob(
-        ["\uFEFF"+JSON.stringify(data,null,2)],
-        {type:'application/json;charset=utf-8'}
-    );
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download='route.json';
-    a.click();
+    const data = points.map(p=>({lat:p.lat, lon:p.lon, azimuth:p.azimuth, commands:p.commands}));
+    const blob = new Blob(["\uFEFF"+JSON.stringify(data,null,2)], {type:'application/json;charset=utf-8'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='route.json'; a.click();
 }
 
 function importJSON(){
     const i=document.createElement('input');
     i.type='file'; i.accept='.json';
-    i.onchange=e=>{
-        const r=new FileReader();
-        r.onload=ev=>{
-            const arr=JSON.parse(ev.target.result);
+    i.onchange = e => {
+        const r = new FileReader();
+        r.onload = ev => {
+            const arr = JSON.parse(ev.target.result);
             points.forEach(p=>map.geoObjects.remove(p.pm));
-            points=[]; current=null;
+            points = [];
+            current = null;
             arr.forEach(p=>{
-                const np=addPoint([p.lat,p.lon]);
-                np.azimuth=p.azimuth||0;
-                np.commands=p.commands?.length?p.commands:[''];
-                updateMarker(np);
+                const np = addPoint([p.lat, p.lon]);
+                np.azimuth = p.azimuth || 0;
+                np.commands = p.commands?.length ? p.commands : [];
             });
+            updateAllMarkers();
         };
-        r.readAsText(e.target.files[0],'UTF-8');
+        r.readAsText(e.target.files[0], 'UTF-8');
     };
     i.click();
 }
 
-/* ===== GIST ===== */
-async function updateGist(){
-    if(!GITHUB_TOKEN){
-        alert('Не указан GitHub token');
+// ===== Выпадающий список с кнопкой "Готово" над панелью =====
+function toggleCommandDropdown(){
+    if(!current) return;
+    const existing = document.querySelector('.command-dropdown');
+    if(existing){
+        existing.classList.remove('show');
+        setTimeout(()=>existing.remove(), 300);
         return;
     }
 
-    const data=points.map(p=>({
-        lat:p.lat,lon:p.lon,azimuth:p.azimuth,commands:p.commands
-    }));
+    const panelRect = document.getElementById('panel').getBoundingClientRect();
 
-    const files={};
-    files[GIST_FILENAME]={content:JSON.stringify(data,null,2)};
+    const dropdown = document.createElement('div');
+    dropdown.className = 'command-dropdown';
+    dropdown.style.top = panelRect.top + 'px';
+    dropdown.style.right = (window.innerWidth - panelRect.right) + 'px';
+    dropdown.style.width = panelRect.width + 'px';
+    dropdown.style.maxHeight = (window.innerHeight - panelRect.top - 10) + 'px';
 
-    const res=await fetch('https://api.github.com/gists/'+GIST_ID,{
-        method:'PATCH',
-        headers:{
-            'Authorization':'Bearer '+GITHUB_TOKEN,
-            'Accept':'application/vnd.github+json'
-        },
-        body:JSON.stringify({files})
+    COMMAND_OPTIONS.forEach(option=>{
+        const label = document.createElement('label');
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = option;
+        cb.checked = current.commands.includes(option);
+        const span = document.createElement('span');
+        span.textContent = option;
+        label.appendChild(cb);
+        label.appendChild(span);
+        dropdown.appendChild(label);
     });
 
-    if(res.ok) alert('Gist обновлён');
-    else alert('Ошибка обновления');
-}
+    const doneBtn = document.createElement('button');
+    doneBtn.textContent = 'Готово';
+    doneBtn.style.cssText = `
+        margin-top:12px;
+        width:100%;
+        padding:10px;
+        font-size:16px;
+        border:none;
+        border-radius:10px;
+        background:#4CAF50;
+        color:white;
+        cursor:pointer;
+        transition: background 0.2s;
+    `;
+    doneBtn.onmouseover = ()=>doneBtn.style.background = '#45a049';
+    doneBtn.onmouseout = ()=>doneBtn.style.background = '#4CAF50';
+    doneBtn.onclick = ()=>{
+        const selected = [];
+        dropdown.querySelectorAll('input:checked').forEach(c=>selected.push(c.value));
+        current.commands = selected;
+        updateCommandsDisplay();
+        updateAllMarkers();
+        dropdown.classList.remove('show');
+        setTimeout(()=>dropdown.remove(),300);
+    };
 
-async function loadFromGist(){
-    const res=await fetch('https://api.github.com/gists/'+GIST_ID,{
-        headers:{'Authorization':'Bearer '+GITHUB_TOKEN}
-    });
+    dropdown.appendChild(doneBtn);
 
-    const gist=await res.json();
-    const arr=JSON.parse(gist.files[GIST_FILENAME].content);
-
-    points.forEach(p=>map.geoObjects.remove(p.pm));
-    points=[]; current=null;
-
-    arr.forEach(p=>{
-        const np=addPoint([p.lat,p.lon]);
-        np.azimuth=p.azimuth||0;
-        np.commands=p.commands?.length?p.commands:[''];
-        updateMarker(np);
-    });
-
-    alert('Маршрут загружен');
+    document.body.appendChild(dropdown);
+    setTimeout(()=>dropdown.classList.add('show'), 10);
 }
 </script>
 </body>
