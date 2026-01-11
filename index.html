@@ -53,13 +53,22 @@ button:hover{opacity:0.85}
     position:fixed; right:10px; top:10px;
     width:360px; max-width:95%; max-height:calc(100vh-20px);
     background:rgba(255,255,255,0.95);
-    border-radius:16px;padding:16px;
+    border-radius:16px;padding:8px 16px; /* уменьшенный padding */
     box-shadow:0 20px 40px rgba(0,0,0,0.35);
     overflow:auto; z-index:1000; display:flex; flex-direction:column; transition:opacity .3s ease;
 }
-.command-dropdown label{display:flex;gap:12px;align-items:center;padding:8px 6px;border-radius:8px;cursor:pointer;transition:background .2s ease;}
+.command-dropdown label{
+    display:flex; gap:8px; align-items:center;
+    padding:4px 6px; /* уменьшенный padding */
+    border-radius:8px; cursor:pointer; transition:background .2s ease;
+    font-size:13px; /* уменьшенный текст */
+}
 .command-dropdown label:hover{background:rgba(47,128,237,0.08);}
-.command-dropdown input[type=checkbox]{width:18px;height:18px;}
+.command-dropdown input[type=checkbox]{
+    width:16px; height:16px; min-width:16px; min-height:16px; /* одинаковый размер */
+}
+
+/* Buttons in dropdown */
 .cmd-buttons{display:flex;gap:12px;margin-top:12px}
 .cmd-buttons button{flex:1;padding:10px 0;font-weight:bold;border-radius:12px;}
 .cmd-buttons button.secondary{background:#aaa;} .cmd-buttons button:hover{opacity:0.9}
@@ -78,7 +87,7 @@ button:hover{opacity:0.85}
 
 /* Custom command row */
 #customCmdRow{display:flex;gap:6px; margin-top:8px;}
-#customCmdRow input{flex:1;} /* растягиваем поле на всю ширину панели */
+#customCmdRow input{flex:1;} 
 #customCmdRow button{width:60px;}
 </style>
 </head>
@@ -141,6 +150,7 @@ const COMMANDS=[
 'Выполним разворот в ограниченном пространстве','Выполняем остановку и начало движения на подъеме'
 ];
 
+// ===== PANEL TOGGLE =====
 function togglePanel(){
     const p=document.getElementById('panel');
     const b=document.getElementById('panelToggle');
@@ -149,11 +159,11 @@ function togglePanel(){
     b.textContent=panelCollapsed?'⮞':'⮜';
 }
 
-/* ===== TOKEN PROMPT ===== */
+// ===== TOKEN PROMPT =====
 function showTokenPrompt(){document.getElementById('tokenPrompt').style.display='flex';}
 async function saveToken(){
     const t=document.getElementById('gistTokenInput').value.trim();
-    if(!t)return alert('Введите токен!');
+    if(!t) return alert('Введите токен!');
     try{
         const r=await fetch(`https://api.github.com/gists/${GIST_ID}`,{headers:{'Authorization':'Bearer '+t}});
         if(!r.ok) throw new Error('Неверный токен или Gist ID!');
@@ -166,7 +176,7 @@ async function saveToken(){
     }
 }
 
-/* ===== MAP INIT ===== */
+// ===== MAP INIT =====
 if(!GITHUB_TOKEN){ showTokenPrompt(); } else { initMap(); }
 
 async function initMap(){
@@ -178,15 +188,18 @@ async function initMap(){
     });
 }
 
-/* SVG стрелки */
+// ===== SVG ARROW =====
 function arrowSVG(a,color){
     return 'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><g transform="rotate(${a},20,20)"><polygon points="20,2 28,30 20,24 12,30" fill="${color}" stroke="black" stroke-width="1"/></g></svg>`);
 }
 
-/* POINTS */
+// ===== POINTS =====
+function round6(n){ return parseFloat(n.toFixed(6)); }
+
 function addPoint(c){
-    const p = {lat: c[0], lon: c[1], azimuth: 0, commands: [], pm: null};
-    p.pm = new ymaps.Placemark(c, {}, {
+    const lat = round6(c[0]), lon = round6(c[1]);
+    const p = {lat, lon, azimuth: 0, commands: [], pm: null};
+    p.pm = new ymaps.Placemark([lat, lon], {}, {
         iconLayout: 'default#image',
         iconImageHref: arrowSVG(0,'gray'),
         iconImageSize: [40,40],
@@ -196,11 +209,10 @@ function addPoint(c){
 
     p.pm.events.add('click', () => selectPoint(p));
 
-    // Обновление координат при перетаскивании
     p.pm.events.add('dragend', e => {
         const coords = e.get('target').geometry.getCoordinates();
-        p.lat = coords[0];
-        p.lon = coords[1];
+        p.lat = round6(coords[0]);
+        p.lon = round6(coords[1]);
         updateInfo();
         updateAllMarkers();
     });
@@ -214,7 +226,7 @@ function addPoint(c){
 function selectPoint(p){current=p;updateInfo();updateAllMarkers();}
 function removePoint(){if(!current)return; map.geoObjects.remove(current.pm); points=points.filter(x=>x!==current); current=null;updateInfo();updateAllMarkers();}
 
-/* UI */
+// ===== UI UPDATE =====
 function updateInfo(){
     const i=document.getElementById('pointInfo'); 
     const c=document.getElementById('coordInfo');
@@ -229,7 +241,7 @@ function updateInfo(){
 
 function rotate(d){
     if(!current) return;
-    current.azimuth = (current.azimuth + d + 360) % 360; // сохраняем в объекте точки
+    current.azimuth = (current.azimuth + d + 360) % 360;
     updateAllMarkers();
     updateInfo();
 }
@@ -241,7 +253,7 @@ function updateAllMarkers(){
     });
 }
 
-/* COMMANDS DROPDOWN */
+// ===== COMMAND DROPDOWN =====
 function toggleCommandDropdown(){
     if(!current)return;
     let d=document.querySelector('.command-dropdown');
@@ -272,12 +284,13 @@ function addCustomCommand(){
     updateAllMarkers();
 }
 
-/* JSON */
+// ===== JSON =====
 function exportJSON(){
-    const data=points.map(p=>({lat:p.lat,lon:p.lon,azimuth:p.azimuth,commands:p.commands}));
+    const data=points.map(p=>({lat:round6(p.lat),lon:round6(p.lon),azimuth:p.azimuth,commands:p.commands}));
     const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='route.json';a.click();
 }
+
 function importJSON(){
     const i=document.createElement('input');i.type='file';i.accept='.json';
     i.onchange=e=>{
@@ -286,7 +299,7 @@ function importJSON(){
             points.forEach(p=>map.geoObjects.remove(p.pm));
             points=[];
             JSON.parse(r.result).forEach(p=>{
-                const np=addPoint([p.lat,p.lon]);
+                const np=addPoint([round6(p.lat),round6(p.lon)]);
                 np.azimuth=p.azimuth||0;
                 np.commands=p.commands||[];
             });
@@ -297,10 +310,10 @@ function importJSON(){
     i.click();
 }
 
-/* GIST */
+// ===== GIST =====
 async function updateGist(){
     if(!GITHUB_TOKEN) return;
-    const data=points.map(p=>({lat:p.lat,lon:p.lon,azimuth:p.azimuth,commands:p.commands}));
+    const data=points.map(p=>({lat:round6(p.lat),lon:round6(p.lon),azimuth:p.azimuth,commands:p.commands}));
     await fetch(`https://api.github.com/gists/${GIST_ID}`,{
         method:'PATCH',
         headers:{
@@ -310,6 +323,7 @@ async function updateGist(){
         body: JSON.stringify({files:{[GIST_FILENAME]:{content:JSON.stringify(data,null,2)}}})
     });
 }
+
 async function loadFromGist(){
     if(!GITHUB_TOKEN) return;
     try{
@@ -319,13 +333,14 @@ async function loadFromGist(){
         points.forEach(p=>map.geoObjects.remove(p.pm));
         points=[];
         JSON.parse(g.files[GIST_FILENAME].content).forEach(p=>{
-            const np=addPoint([p.lat,p.lon]);
+            const np=addPoint([round6(p.lat),round6(p.lon)]);
             np.azimuth=p.azimuth||0;
             np.commands=p.commands||[];
         });
         updateAllMarkers();
     }catch(e){console.error(e);}
 }
+
 function autoSaveGist(){if(points.length && GITHUB_TOKEN) updateGist();}
 </script>
 </body>
