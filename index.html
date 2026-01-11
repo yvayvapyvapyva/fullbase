@@ -9,128 +9,79 @@
 html,body{margin:0;height:100%;font-family:'Inter',Arial}
 #map{position:absolute;inset:0}
 
-/* ===== PANEL ===== */
+/* PANEL */
 #panel{
-    position:absolute;
-    right:10px; top:10px;
-    width:360px;
-    max-width:95%;
+    position:absolute; right:10px; top:10px;
+    width:360px; max-width:95%;
     background:rgba(255,255,255,0.28);
     backdrop-filter:blur(20px);
-    border-radius:16px;
-    padding:16px;
+    border-radius:16px; padding:16px;
     z-index:1000;
     box-shadow:0 10px 30px rgba(0,0,0,0.25);
     transition:transform .3s ease, opacity .3s ease;
 }
-#panel.collapsed{
-    transform:translateX(110%);
-    opacity:0.3;
-}
+#panel.collapsed{transform:translateX(110%);opacity:0.3;}
 
-/* ===== TOGGLE BUTTON ===== */
+/* TOGGLE BUTTON */
 #panelToggle{
-    position:fixed;
-    top:12px;
-    right:12px;
-    width:44px;
-    height:44px;
+    position:fixed; top:12px; right:12px;
+    width:44px;height:44px;
     border-radius:50%;
     background:linear-gradient(135deg,#4a90e2,#2f80ed);
-    color:white;
-    border:none;
-    cursor:pointer;
-    font-size:22px;
-    z-index:1001;
+    color:white; border:none; cursor:pointer;
+    font-size:22px; z-index:1001;
     box-shadow:0 4px 12px rgba(0,0,0,0.35);
-    transition:background .3s ease, transform .2s ease;
 }
 #panelToggle:hover{background:linear-gradient(135deg,#6aa6f3,#3f90ff);}
 
-/* ===== UI ELEMENTS ===== */
-button,input{
-    margin-top:8px;
-    border-radius:12px;
-    font-size:14px;
-    padding:10px;
-    border:1px solid rgba(0,0,0,0.15);
-    outline:none;
-    transition:all .2s ease;
-}
+/* UI */
+button,input{margin-top:8px;border-radius:12px;font-size:14px;padding:10px;border:1px solid rgba(0,0,0,0.15);outline:none;transition:all .2s ease;}
 input:focus{border-color:#2f80ed;box-shadow:0 0 8px rgba(47,128,237,0.4);}
 button{background:#2f80ed;color:white;border:none;cursor:pointer;}
-button.secondary{background:#aaa}
-button.danger{background:#e74c3c}
+button.secondary{background:#aaa} button.danger{background:#e74c3c}
 button:hover{opacity:0.85}
 
-/* ===== Azimuth Buttons ===== */
-.az-row{display:flex;gap:8px}
-.az-row button{height:56px;font-size:20px;flex:1;}
+/* Azimuth */
+.az-row{display:flex;gap:8px} .az-row button{height:56px;font-size:20px;flex:1;}
 
-/* ===== Info Field ===== */
-.info{
-    margin-top:8px;
-    font-size:14px;
-    white-space:pre-line;
-    cursor:pointer;
-    padding:10px;
-    border-radius:12px;
-    background:rgba(0,0,0,0.05);
-    transition:background .2s ease;
-}
+/* Info */
+.info{margin-top:8px;font-size:14px;white-space:pre-line;cursor:pointer;padding:10px;border-radius:12px;background:rgba(0,0,0,0.05);transition:background .2s ease;}
 .info:hover{background:rgba(0,0,0,0.08);}
 
-/* ===== COMMAND DROPDOWN ===== */
+/* Command dropdown */
 .command-dropdown{
-    position:fixed;
-    right:10px;
-    top:10px;
-    width:360px;
-    max-width:95%;
-    max-height:calc(100vh - 20px);
+    position:fixed; right:10px; top:10px;
+    width:360px; max-width:95%; max-height:calc(100vh-20px);
     background:rgba(255,255,255,0.95);
-    border-radius:16px;
-    padding:16px;
+    border-radius:16px;padding:16px;
     box-shadow:0 20px 40px rgba(0,0,0,0.35);
-    overflow:auto;
-    z-index:1000;
-    display:flex;
-    flex-direction:column;
-    transition:opacity .3s ease;
+    overflow:auto; z-index:1000; display:flex; flex-direction:column; transition:opacity .3s ease;
 }
-.command-dropdown label{
-    display:flex;
-    gap:12px;
-    align-items:center;
-    padding:8px 6px;
-    border-radius:8px;
-    cursor:pointer;
-    transition:background .2s ease;
-}
+.command-dropdown label{display:flex;gap:12px;align-items:center;padding:8px 6px;border-radius:8px;cursor:pointer;transition:background .2s ease;}
 .command-dropdown label:hover{background:rgba(47,128,237,0.08);}
 .command-dropdown input[type=checkbox]{width:18px;height:18px;}
+.cmd-buttons{display:flex;gap:12px;margin-top:12px}
+.cmd-buttons button{flex:1;padding:10px 0;font-weight:bold;border-radius:12px;}
+.cmd-buttons button.secondary{background:#aaa;} .cmd-buttons button:hover{opacity:0.9}
 
-/* Command buttons inside dropdown */
-.cmd-buttons{
-    display:flex;
-    gap:12px;
-    margin-top:12px;
+/* Token prompt */
+#tokenPrompt{
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:2000;
 }
-.cmd-buttons button{
-    flex:1;
-    padding:10px 0;
-    font-weight:bold;
-    border-radius:12px;
+#tokenPrompt div{
+    background:white;padding:24px;border-radius:16px;max-width:90%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.35);
 }
-.cmd-buttons button.secondary{background:#aaa;}
-.cmd-buttons button:hover{opacity:0.9;}
+#tokenPrompt input{width:100%;margin-top:12px;}
+#tokenPrompt button{margin-top:12px;width:100%;}
+#tokenError{color:red;margin-top:8px;font-size:14px;}
 </style>
 </head>
 <body>
 
 <div id="map"></div>
 
-<!-- Кнопка управления панелью -->
+<!-- Toggle panel -->
 <button id="panelToggle" onclick="togglePanel()">⮜</button>
 
 <div id="panel">
@@ -158,10 +109,20 @@ button:hover{opacity:0.85}
     <button onclick="updateGist()">💾 Обновить Gist</button>
 </div>
 
+<!-- Token prompt -->
+<div id="tokenPrompt" style="display:none">
+    <div>
+        <div>Введите токен GitHub Gist:</div>
+        <input type="text" id="gistTokenInput" placeholder="ghp_...">
+        <button onclick="saveToken()">Сохранить</button>
+        <div id="tokenError"></div>
+    </div>
+</div>
+
 <script>
 let map, points=[], current=null;
 let panelCollapsed=false;
-const GITHUB_TOKEN='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';
+let GITHUB_TOKEN=localStorage.getItem('GITHUB_TOKEN')||'';
 const GIST_ID='c4b196bd97194e06592b94646e02118b';
 const GIST_FILENAME='all.json';
 
@@ -172,7 +133,7 @@ const COMMANDS=[
 'На ближайшем повороте повернем направо','На ближайшем повороте повернем налево',
 'Найдите место для остановки и остановитесь','Выполняем остановку параллельно краю проезжей части',
 'Выполняем разгон до максимальной скорости','Набираем максимальную скорость на данном участке дороги',
-'Выполним разворот в ограниченном пространстве','Выполним остановку и начало движения на подъеме'
+'Выполним разворот в ограниченном пространстве','Выполняем остановку и начало движения на подъеме'
 ];
 
 function togglePanel(){
@@ -183,158 +144,101 @@ function togglePanel(){
     b.textContent=panelCollapsed?'⮞':'⮜';
 }
 
-/* ===== MAP INIT ===== */
-ymaps.ready(async ()=>{
-    map=new ymaps.Map("map",{center:[56.3399,43.9332],zoom:18,type:'yandex#satellite',controls:[]});
-    map.events.add('click',e=>addPoint(e.get('coords')));
-    await loadFromGist(true);
-    setInterval(autoSaveGist,10000);
-});
-
-/* SVG стрелки с черной окантовкой */
-function arrowSVG(a,color){
-return 'data:image/svg+xml;utf8,'+encodeURIComponent(`
-<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">
-<g transform="rotate(${a},20,20)">
-<polygon points="20,2 28,30 20,24 12,30" fill="${color}" stroke="black" stroke-width="1"/>
-</g>
-</svg>`);
+/* ===== TOKEN PROMPT ===== */
+function showTokenPrompt(){document.getElementById('tokenPrompt').style.display='flex';}
+async function saveToken(){
+    const t=document.getElementById('gistTokenInput').value.trim();
+    if(!t)return alert('Введите токен!');
+    // Проверяем токен
+    try{
+        const r=await fetch(`https://api.github.com/gists/${GIST_ID}`,{headers:{'Authorization':'Bearer '+t}});
+        if(!r.ok) throw new Error('Неверный токен или Gist ID!');
+        GITHUB_TOKEN=t;
+        localStorage.setItem('GITHUB_TOKEN',GITHUB_TOKEN);
+        document.getElementById('tokenPrompt').style.display='none';
+        initMap();
+    }catch(e){
+        document.getElementById('tokenError').textContent=e.message;
+    }
 }
 
-/* ===== POINTS ===== */
+/* ===== MAP INIT ===== */
+if(!GITHUB_TOKEN){ showTokenPrompt(); } else { initMap(); }
+
+async function initMap(){
+    ymaps.ready(async ()=>{
+        map=new ymaps.Map("map",{center:[56.3399,43.9332],zoom:18,type:'yandex#satellite',controls:[]});
+        map.events.add('click',e=>addPoint(e.get('coords')));
+        await loadFromGist();
+        setInterval(autoSaveGist,10000);
+    });
+}
+
+/* SVG стрелки */
+function arrowSVG(a,color){
+return 'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><g transform="rotate(${a},20,20)"><polygon points="20,2 28,30 20,24 12,30" fill="${color}" stroke="black" stroke-width="1"/></g></svg>`);
+}
+
+/* POINTS */
 function addPoint(c){
     const p={lat:c[0],lon:c[1],azimuth:0,commands:[],pm:null};
     p.pm=new ymaps.Placemark(c,{},{
-        iconLayout:'default#image',
-        iconImageHref:arrowSVG(0,'gray'),
-        iconImageSize:[40,40],
-        iconImageOffset:[-20,-20],
-        draggable:true
+        iconLayout:'default#image', iconImageHref:arrowSVG(0,'gray'),
+        iconImageSize:[40,40], iconImageOffset:[-20,-20], draggable:true
     });
     p.pm.events.add('click',()=>selectPoint(p));
-    map.geoObjects.add(p.pm);
-    points.push(p);
-    selectPoint(p);
-    return p;
+    map.geoObjects.add(p.pm); points.push(p);
+    selectPoint(p); return p;
 }
-
 function selectPoint(p){current=p;updateInfo();updateAllMarkers();}
-function removePoint(){
-    if(!current) return;
-    map.geoObjects.remove(current.pm);
-    points=points.filter(x=>x!==current);
-    current=null;updateInfo();updateAllMarkers();
-}
+function removePoint(){if(!current)return; map.geoObjects.remove(current.pm); points=points.filter(x=>x!==current); current=null;updateInfo();updateAllMarkers();}
 
-/* ===== UI ===== */
+/* UI */
 function updateInfo(){
-    const i=document.getElementById('pointInfo');
-    const c=document.getElementById('coordInfo');
+    const i=document.getElementById('pointInfo'); const c=document.getElementById('coordInfo');
     if(!current){i.textContent='Точка не выбрана';c.textContent='—';return;}
     i.textContent=current.commands.length?current.commands.join('\n'):'(нет команд)';
     c.textContent=`${current.lat.toFixed(6)}, ${current.lon.toFixed(6)}\nАзимут: ${current.azimuth}°`;
 }
-
-function rotate(d){
-    if(!current) return;
-    current.azimuth=(current.azimuth+d+360)%360;
-    updateAllMarkers();updateInfo();
-}
-
+function rotate(d){if(!current)return; current.azimuth=(current.azimuth+d+360)%360; updateAllMarkers(); updateInfo();}
 function updateAllMarkers(){
     points.forEach(p=>{
-        let col='gray';
-        if(p.commands.length) col='blue';
-        if(p===current) col='green';
+        let col='gray'; if(p.commands.length) col='blue'; if(p===current) col='green';
         p.pm.options.set('iconImageHref',arrowSVG(p.azimuth,col));
     });
 }
 
-/* ===== COMMANDS DROPDOWN ===== */
+/* COMMANDS DROPDOWN */
 function toggleCommandDropdown(){
-    if(!current) return;
+    if(!current)return;
     let d=document.querySelector('.command-dropdown');
     if(d){d.remove();return;}
-    d=document.createElement('div');
-    d.className='command-dropdown';
+    d=document.createElement('div'); d.className='command-dropdown';
     d.style.width=document.getElementById('panel').offsetWidth+'px';
     d.style.maxHeight=(window.innerHeight-20)+'px';
     COMMANDS.forEach(c=>{
-        const l=document.createElement('label');
-        const cb=document.createElement('input');
-        cb.type='checkbox';
-        cb.checked=current.commands.includes(c);
+        const l=document.createElement('label'); const cb=document.createElement('input');
+        cb.type='checkbox'; cb.checked=current.commands.includes(c);
         l.appendChild(cb); l.appendChild(document.createTextNode(c));
         d.appendChild(l);
     });
     const btns=document.createElement('div'); btns.className='cmd-buttons';
     const ok=document.createElement('button'); ok.textContent='Готово';
-    ok.onclick=()=>{current.commands=[...d.querySelectorAll('input:checked')].map(x=>x.parentNode.textContent.trim()); updateInfo(); updateAllMarkers(); d.remove();};
-    const cancel=document.createElement('button'); cancel.textContent='Отмена'; cancel.className='secondary';
-    cancel.onclick=()=>d.remove();
-    btns.append(ok,cancel); d.appendChild(btns);
-    document.body.appendChild(d);
+    ok.onclick=()=>{current.commands=[...d.querySelectorAll('input:checked')].map(x=>x.parentNode.textContent.trim()); updateInfo(); updateAllMarkers(); d.remove();}
+    const cancel=document.createElement('button'); cancel.textContent='Отмена'; cancel.className='secondary'; cancel.onclick=()=>d.remove();
+    btns.append(ok,cancel); d.appendChild(btns); document.body.appendChild(d);
 }
+function addCustomCommand(){if(!current)return; const i=document.getElementById('customCmd'); if(!i.value.trim())return; current.commands.push(i.value.trim()); i.value='';updateInfo();updateAllMarkers();}
 
-function addCustomCommand(){
-    if(!current) return;
-    const i=document.getElementById('customCmd');
-    if(!i.value.trim()) return;
-    current.commands.push(i.value.trim());
-    i.value='';updateInfo();updateAllMarkers();
-}
+/* JSON */
+function exportJSON(){const data=points.map(p=>({lat:p.lat,lon:p.lon,azimuth:p.azimuth,commands:p.commands}));const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='route.json';a.click();}
+function importJSON(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const r=new FileReader();r.onload=()=>{points.forEach(p=>map.geoObjects.remove(p.pm));points=[];JSON.parse(r.result).forEach(p=>{const np=addPoint([p.lat,p.lon]);np.azimuth=p.azimuth||0;np.commands=p.commands||[]});updateAllMarkers();};r.readAsText(e.target.files[0]);};i.click();}
 
-/* ===== JSON ===== */
-function exportJSON(){
-    const data=points.map(p=>({lat:p.lat,lon:p.lon,azimuth:p.azimuth,commands:p.commands}));
-    const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='route.json'; a.click();
-}
-
-function importJSON(){
-    const i=document.createElement('input'); i.type='file'; i.accept='.json';
-    i.onchange=e=>{
-        const r=new FileReader();
-        r.onload=()=>{
-            points.forEach(p=>map.geoObjects.remove(p.pm));
-            points=[];
-            JSON.parse(r.result).forEach(p=>{
-                const np=addPoint([p.lat,p.lon]);
-                np.azimuth=p.azimuth||0;
-                np.commands=p.commands||[];
-            });
-            updateAllMarkers();
-        };
-        r.readAsText(e.target.files[0]);
-    };
-    i.click();
-}
-
-/* ===== GIST ===== */
-async function updateGist(){
-    const data=points.map(p=>({lat:p.lat,lon:p.lon,azimuth:p.azimuth,commands:p.commands}));
-    await fetch(`https://api.github.com/gists/${GIST_ID}`,{
-        method:'PATCH',
-        headers:{'Authorization':'Bearer '+GITHUB_TOKEN,'Content-Type':'application/json'},
-        body:JSON.stringify({files:{[GIST_FILENAME]:{content:JSON.stringify(data,null,2)}}})
-    });
-}
-
-async function loadFromGist(){
-    const r=await fetch(`https://api.github.com/gists/${GIST_ID}`,{headers:{'Authorization':'Bearer '+GITHUB_TOKEN}});
-    const g=await r.json();
-    if(!g.files[GIST_FILENAME]) return;
-    points.forEach(p=>map.geoObjects.remove(p.pm));
-    points=[];
-    JSON.parse(g.files[GIST_FILENAME].content).forEach(p=>{
-        const np=addPoint([p.lat,p.lon]);
-        np.azimuth=p.azimuth||0;
-        np.commands=p.commands||[];
-    });
-    updateAllMarkers();
-}
-
-function autoSaveGist(){ if(points.length) updateGist(); }
+/* GIST */
+async function updateGist(){if(!GITHUB_TOKEN)return; const data=points.map(p=>({lat:p.lat,lon:p.lon,azimuth:p.azimuth,commands:p.commands}));
+await fetch(`https://api.github.com/gists/${GIST_ID}`,{method:'PATCH',headers:{'Authorization':'Bearer '+GITHUB_TOKEN,'Content-Type':'application/json'},body:JSON.stringify({files:{[GIST_FILENAME]:{content:JSON.stringify(data,null,2)}}})});}
+async function loadFromGist(){if(!GITHUB_TOKEN)return; try{const r=await fetch(`https://api.github.com/gists/${GIST_ID}`,{headers:{'Authorization':'Bearer '+GITHUB_TOKEN}});const g=await r.json();if(!g.files[GIST_FILENAME])return;points.forEach(p=>map.geoObjects.remove(p.pm));points=[];JSON.parse(g.files[GIST_FILENAME].content).forEach(p=>{const np=addPoint([p.lat,p.lon]);np.azimuth=p.azimuth||0;np.commands=p.commands||[]});updateAllMarkers();}catch(e){console.error(e);}}
+function autoSaveGist(){if(points.length && GITHUB_TOKEN) updateGist();}
 </script>
 </body>
 </html>
