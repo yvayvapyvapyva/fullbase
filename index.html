@@ -8,32 +8,32 @@
 <script src="https://api-maps.yandex.ru/2.1/?apikey=ВАШ_API_КЛЮЧ&lang=ru_RU"></script>
 
 <style>
-html, body {margin:0;height:100%;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5;}
+html, body {margin:0; height:100%; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f5f5f5;}
 #map {position:absolute; inset:0;}
 
 /* Панель точки */
 #panel {
     position:absolute; right:10px; top:10px; z-index:10;
-    width:380px; max-height:90%;
-    background: rgba(255,255,255,0.85); /* полупрозрачный фон */
+    width: min(380px, 90%);
+    max-width:90%;
+    max-height:90%;
+    background: rgba(255,255,255,0.85);
     border-radius:16px; padding:16px;
     box-shadow: 0 12px 32px rgba(0,0,0,0.2);
     overflow:auto;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, width 0.3s ease;
+    min-width:200px;
 }
 
-/* Ручка для изменения ширины слева внизу */
-#panel-resizer {
-    position:absolute;
-    left:0; bottom:0;
-    width:20px; height:20px;
-    cursor: ew-resize;
-    z-index:100;
-    background: rgba(0,0,0,0.1);
-    border-radius: 4px;
+/* На маленьких экранах делаем панель почти всю ширину */
+@media (max-width: 500px) {
+    #panel {
+        width: 95%;
+        left:2.5%;
+        right:auto;
+    }
 }
 
-/* Кнопка скрытия панели */
 #togglePanelBtn {
     position:absolute;
     top:10px;
@@ -50,18 +50,12 @@ html, body {margin:0;height:100%;font-family: 'Segoe UI', Tahoma, Geneva, Verdan
     display:flex;
     align-items:center;
     justify-content:center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
 }
-
 #togglePanelBtn:hover {background:#45a049;}
 
-/* Кнопки управления азимутом */
-.az-btns {
-    display:flex;
-    gap:8px;
-    margin-bottom:8px;
-}
-
+/* Кнопки азимута */
+.az-btns {display:flex; gap:8px; margin-bottom:8px;}
 .az-btns button {
     flex:1;
     font-size:20px;
@@ -73,15 +67,10 @@ html, body {margin:0;height:100%;font-family: 'Segoe UI', Tahoma, Geneva, Verdan
     cursor:pointer;
     transition: background 0.2s;
 }
-
 .az-btns button:hover {background:#45a049;}
 
-/* Координаты + азимут */
-.coord {
-    margin-top:8px;
-    font-size:14px;
-    color:#555;
-}
+/* Координаты */
+.coord {margin-top:8px; font-size:14px; color:#555;}
 
 /* Команды текущей точки */
 .commands-display {
@@ -93,7 +82,6 @@ html, body {margin:0;height:100%;font-family: 'Segoe UI', Tahoma, Geneva, Verdan
     white-space: pre-wrap;
     min-height:40px;
 }
-
 .commands-display:hover {background:#e0e0e0;}
 
 /* Кнопки панели */
@@ -109,7 +97,6 @@ button.panel-btn {
     width:100%;
     transition: background 0.2s;
 }
-
 button.panel-btn:hover {background:#45a049;}
 
 /* Выпадающий список команд */
@@ -121,7 +108,7 @@ button.panel-btn:hover {background:#45a049;}
     max-height:90vh;
     overflow-y:auto;
     background: #ffffff;
-    padding: 16px;
+    padding:16px;
     border-radius:16px;
     box-shadow: 0 12px 32px rgba(0,0,0,0.2);
     z-index:1001;
@@ -129,10 +116,8 @@ button.panel-btn:hover {background:#45a049;}
     opacity:0;
     transition: transform 0.3s ease, opacity 0.3s ease;
 }
-
 .command-dropdown.show {transform: translateY(0); opacity:1;}
 
-/* Чекбоксы */
 .command-dropdown label {
     display:flex;
     align-items:center;
@@ -143,127 +128,90 @@ button.panel-btn:hover {background:#45a049;}
     padding:4px 6px;
     transition: background 0.2s;
 }
-
-.command-dropdown label:hover {background: rgba(76, 175, 80, 0.1);}
-
+.command-dropdown label:hover {background: rgba(76,175,80,0.1);}
 .command-dropdown input[type="checkbox"] {
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    border: 2px solid #ccc;
-    border-radius: 50%;
-    margin-right: 10px;
-    position: relative;
-    transition: border-color 0.3s, background-color 0.3s;
+    appearance:none;
+    width:20px; height:20px;
+    border:2px solid #ccc;
+    border-radius:50%;
+    margin-right:10px;
+    position:relative;
+    transition:border-color 0.3s, background-color 0.3s;
 }
-
 .command-dropdown input[type="checkbox"]:checked {
-    border-color: #4CAF50;
-    background-color: #4CAF50;
+    border-color:#4CAF50;
+    background-color:#4CAF50;
 }
-
 .command-dropdown input[type="checkbox"]:checked::after {
-    content: '';
-    position: absolute;
+    content:'';
+    position:absolute;
     top:4px;
     left:4px;
-    width:8px;
-    height:8px;
+    width:8px; height:8px;
     border-radius:50%;
     background:#fff;
 }
-
 .command-dropdown input[type="checkbox"]:checked + span {
-    color:#4CAF50;
-    font-weight:500;
+    color:#4CAF50; font-weight:500;
 }
-
-.command-dropdown span {user-select: none;}
+.command-dropdown span {user-select:none;}
 </style>
 </head>
 <body>
 
 <div id="map"></div>
 
-<!-- Кнопка скрытия/показа панели -->
 <button id="togglePanelBtn" onclick="togglePanel()">☰</button>
 
 <div id="panel">
-    <div id="panel-resizer"></div>
     <div class="az-btns">
         <button onclick="rotate(-10)">⟲ −10°</button>
         <button onclick="rotate(10)">⟳ +10°</button>
     </div>
-
     <div class="coord" id="coord">Координаты: — , — | Азимут: —°</div>
-
     <div class="commands-display" onclick="toggleCommandDropdown()">(нет команд)</div>
-
     <button class="panel-btn" onclick="removePoint()">Удалить точку</button>
-
     <hr>
     <button class="panel-btn" onclick="exportJSON()">Экспорт JSON</button>
     <button class="panel-btn" onclick="importJSON()">Импорт JSON</button>
-
     <hr>
     <button class="panel-btn" onclick="updateGist()">💾 Обновить Gist</button>
     <button class="panel-btn" onclick="loadFromGist()">📥 Загрузить из Gist</button>
 </div>
 
 <script>
-let map;
-let points = [];
-let current = null;
-
-const GITHUB_TOKEN = 'PASTE_YOUR_GITHUB_TOKEN_HERE';
-const GIST_ID = 'c4b196bd97194e06592b94646e02118b';
-const GIST_FILENAME = 'all.json';
-
-const COMMAND_OPTIONS = [
-    'На перекрестке повернем налево',
-    'На перекрестке поедем прямо',
-    'На перекрестке повернем направо',
-    'На перекрестке выполним разворот',
-    'На круговом движении первый съезд',
-    'На круговом движении второй съезд',
-    'На круговом движении третий съезд',
-    'На круговом движении четвертый съезд',
-    'Выполним разворот вне перекрестка',
-    'Выполним разворот в ближайшем месте',
-    'На ближайшем повороте повернем направо',
-    'На ближайшем повороте повернем налево',
-    'Найдите место для остановки и остановитесь',
-    'Выполняем остановку параллельно краю проезжей части',
-    'Выполняем разгон до максимальной скорости',
-    'Набираем максимальную скорость на данном участке дороги',
-    'Выполним разворот в ограниченном пространстве',
-    'Выполним остановку и начало движения на подъеме'
+let map, points=[], current=null;
+const GITHUB_TOKEN='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';
+const GIST_ID='c4b196bd97194e06592b94646e02118b';
+const GIST_FILENAME='all.json';
+const COMMAND_OPTIONS=[
+    'На перекрестке повернем налево','На перекрестке поедем прямо','На перекрестке повернем направо',
+    'На перекрестке выполним разворот','На круговом движении первый съезд','На круговом движении второй съезд',
+    'На круговом движении третий съезд','На круговом движении четвертый съезд',
+    'Выполним разворот вне перекрестка','Выполним разворот в ближайшем месте',
+    'На ближайшем повороте повернем направо','На ближайшем повороте повернем налево',
+    'Найдите место для остановки и остановитесь','Выполняем остановку параллельно краю проезжей части',
+    'Выполняем разгон до максимальной скорости','Набираем максимальную скорость на данном участке дороги',
+    'Выполним разворот в ограниченном пространстве','Выполним остановку и начало движения на подъеме'
 ];
 
-const coord = document.getElementById('coord');
-const commandsDisplay = document.querySelector('.commands-display');
-const panel = document.getElementById('panel');
-const resizer = document.getElementById('panel-resizer');
-let panelVisible = true;
+const coord=document.getElementById('coord');
+const commandsDisplay=document.querySelector('.commands-display');
+const panel=document.getElementById('panel');
+let panelVisible=true;
 
 ymaps.ready(()=>{
-    map = new ymaps.Map("map", {
-        center:[56.3399,43.9332],
-        zoom:18,
-        type:'yandex#satellite',
-        controls:[]
-    });
-
-    map.events.add('click', e => { addPoint(e.get('coords')); });
+    map=new ymaps.Map("map",{center:[56.3399,43.9332],zoom:18,type:'yandex#satellite',controls:[]});
+    map.events.add('click',e=>addPoint(e.get('coords')));
 });
 
 function arrowSVG(a,color){
-    return 'data:image/svg+xml;utf8,' + encodeURIComponent(`
-<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">
-  <g transform="rotate(${a},20,20)">
-    <polygon points="20,2 28,30 20,24 12,30" fill="${color}" stroke="black" stroke-width="2"/>
-  </g>
-</svg>`);
+    return 'data:image/svg+xml;utf8,'+encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+            <g transform="rotate(${a},20,20)">
+                <polygon points="20,2 28,30 20,24 12,30" fill="${color}" stroke="black" stroke-width="1"/>
+            </g>
+        </svg>`);
 }
 
 function addPoint(coords){
@@ -288,204 +236,111 @@ function addPoint(coords){
     updateAllMarkers();
 }
 
-function selectPoint(p){
-    current=p;
-    updateCoord();
-    updateCommandsDisplay();
-    updateAllMarkers();
-}
-
-function rotate(d){
-    if(!current) return;
-    current.azimuth=(current.azimuth+d+360)%360;
-    updateCoord();
-    updateAllMarkers();
-}
-
+function selectPoint(p){current=p; updateCoord(); updateCommandsDisplay(); updateAllMarkers();}
+function rotate(d){if(!current)return; current.azimuth=(current.azimuth+d+360)%360; updateCoord(); updateAllMarkers();}
 function updateAllMarkers(){
     points.forEach(p=>{
         let color;
         if(p===current) color='green';
-        else if(!p.commands || p.commands.length===0) color='gray';
+        else if(!p.commands||p.commands.length===0) color='gray';
         else color='blue';
-        p.pm.options.set('iconImageHref', arrowSVG(p.azimuth,color));
+        p.pm.options.set('iconImageHref',arrowSVG(p.azimuth,color));
     });
 }
-
-function updateCoord(){
-    coord.textContent=current
-        ? `Координаты: ${current.lat.toFixed(6)} , ${current.lon.toFixed(6)} | Азимут: ${current.azimuth}°`
-        : 'Координаты: — , — | Азимут: —°';
-}
-
-function updateCommandsDisplay(){
-    if(!current) commandsDisplay.textContent = '(нет команд)';
-    else commandsDisplay.textContent = current.commands.length ? current.commands.join('\n') : '(нет команд)';
-}
-
-function removePoint(){
-    if(!current) return;
-    map.geoObjects.remove(current.pm);
-    points = points.filter(p=>p!==current);
-    current = null;
-    updateCoord();
-    updateCommandsDisplay();
-    updateAllMarkers();
-}
-
-function exportJSON(){
-    const data = points.map(p=>({lat:p.lat, lon:p.lon, azimuth:p.azimuth, commands:p.commands}));
-    const blob = new Blob(["\uFEFF"+JSON.stringify(data,null,2)], {type:'application/json;charset=utf-8'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='route.json'; a.click();
-}
-
+function updateCoord(){coord.textContent=current?`Координаты: ${current.lat.toFixed(6)} , ${current.lon.toFixed(6)} | Азимут: ${current.azimuth}°`:'Координаты: — , — | Азимут: —°';}
+function updateCommandsDisplay(){commandsDisplay.textContent=!current||current.commands.length===0?'(нет команд)':current.commands.join('\n');}
+function removePoint(){if(!current)return; map.geoObjects.remove(current.pm); points=points.filter(p=>p!==current); current=null; updateCoord(); updateCommandsDisplay(); updateAllMarkers();}
+function exportJSON(){const data=points.map(p=>({lat:p.lat,lon:p.lon,azimuth:p.azimuth,commands:p.commands})); const blob=new Blob(["\uFEFF"+JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='route.json'; a.click();}
 function importJSON(){
-    const i=document.createElement('input');
-    i.type='file'; i.accept='.json';
-    i.onchange = e => {
-        const r = new FileReader();
-        r.onload = ev => {
-            const arr = JSON.parse(ev.target.result);
+    const i=document.createElement('input'); i.type='file'; i.accept='.json';
+    i.onchange=e=>{
+        const r=new FileReader();
+        r.onload=ev=>{
+            const arr=JSON.parse(ev.target.result);
             points.forEach(p=>map.geoObjects.remove(p.pm));
-            points = [];
-            current = null;
+            points=[]; current=null;
             arr.forEach(p=>{
-                const np = addPoint([p.lat, p.lon]);
-                np.azimuth = p.azimuth || 0;
-                np.commands = p.commands?.length ? p.commands : [];
+                const np=addPoint([p.lat,p.lon]);
+                np.azimuth=p.azimuth||0;
+                np.commands=p.commands?.length?p.commands:[];
             });
             updateAllMarkers();
         };
-        r.readAsText(e.target.files[0], 'UTF-8');
+        r.readAsText(e.target.files[0],'UTF-8');
     };
     i.click();
 }
 
-async function updateGist(){
-    if(!GITHUB_TOKEN){ alert('Не указан GitHub token'); return; }
+async function updateGist() {
+    if(!GITHUB_TOKEN){alert('Не указан GitHub token'); return;}
     const data = points.map(p=>({lat:p.lat, lon:p.lon, azimuth:p.azimuth, commands:p.commands}));
-    const files = {}; files[GIST_FILENAME] = {content: JSON.stringify(data,null,2)};
+    const files={}; files[GIST_FILENAME]={content: JSON.stringify(data,null,2)};
     try {
-        const res = await fetch('https://api.github.com/gists/'+GIST_ID, {
+        const res=await fetch('https://api.github.com/gists/'+GIST_ID,{
             method:'PATCH',
             headers:{'Authorization':'Bearer '+GITHUB_TOKEN,'Accept':'application/vnd.github+json'},
             body: JSON.stringify({files})
         });
         if(!res.ok) throw new Error(await res.text());
         alert('Gist обновлён');
-    } catch(e) { alert('Ошибка обновления:\n'+e.message); }
+    } catch(e) {alert('Ошибка обновления:\n'+e.message);}
 }
 
-async function loadFromGist(){
-    if(!GITHUB_TOKEN){ alert('Не указан GitHub token'); return; }
+async function loadFromGist() {
+    if(!GITHUB_TOKEN){alert('Не указан GitHub token'); return;}
     try {
-        const res = await fetch('https://api.github.com/gists/'+GIST_ID, {
-            headers:{'Authorization':'Bearer '+GITHUB_TOKEN}
-        });
+        const res = await fetch('https://api.github.com/gists/'+GIST_ID,{headers:{'Authorization':'Bearer '+GITHUB_TOKEN}});
         if(!res.ok) throw new Error(await res.text());
-        const gist = await res.json();
+        const gist=await res.json();
         if(!gist.files[GIST_FILENAME]) throw new Error('route.json не найден');
-        const arr = JSON.parse(gist.files[GIST_FILENAME].content);
+        const arr=JSON.parse(gist.files[GIST_FILENAME].content);
         points.forEach(p=>map.geoObjects.remove(p.pm));
         points=[]; current=null;
         arr.forEach(p=>{
             const np = addPoint([p.lat,p.lon]);
             np.azimuth = p.azimuth || 0;
-            np.commands = p.commands?.length ? p.commands : [];
+            np.commands = p.commands?.length?p.commands:[];
         });
         updateAllMarkers();
         alert('Маршрут загружен из Gist');
-    } catch(e){ alert('Ошибка загрузки:\n'+e.message); }
+    } catch(e) {alert('Ошибка загрузки:\n'+e.message);}
 }
 
-// ===== Выпадающий список с кнопкой "Готово" =====
+// Выпадающий список команд с кнопкой "Готово"
 function toggleCommandDropdown(){
     if(!current) return;
-    const existing = document.querySelector('.command-dropdown');
-    if(existing){
-        existing.classList.remove('show');
-        setTimeout(()=>existing.remove(), 300);
-        return;
-    }
-
-    const panelRect = panel.getBoundingClientRect();
-    const dropdown = document.createElement('div');
-    dropdown.className = 'command-dropdown';
-    dropdown.style.top = panelRect.top + 'px';
-    dropdown.style.right = (window.innerWidth - panelRect.right) + 'px';
-    dropdown.style.width = panelRect.width + 'px';
-    dropdown.style.maxHeight = (window.innerHeight - panelRect.top - 10) + 'px';
-
+    const existing=document.querySelector('.command-dropdown');
+    if(existing){existing.classList.remove('show'); setTimeout(()=>existing.remove(),300); return;}
+    const panelRect=panel.getBoundingClientRect();
+    const dropdown=document.createElement('div');
+    dropdown.className='command-dropdown';
+    dropdown.style.top=panelRect.top+'px';
+    dropdown.style.right=(window.innerWidth-panelRect.right)+'px';
+    dropdown.style.width=panelRect.width+'px';
+    dropdown.style.maxHeight=(window.innerHeight-panelRect.top-10)+'px';
     COMMAND_OPTIONS.forEach(option=>{
-        const label = document.createElement('label');
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.value = option;
-        cb.checked = current.commands.includes(option);
-        const span = document.createElement('span');
-        span.textContent = option;
-        label.appendChild(cb);
-        label.appendChild(span);
+        const label=document.createElement('label');
+        const cb=document.createElement('input'); cb.type='checkbox'; cb.value=option; cb.checked=current.commands.includes(option);
+        const span=document.createElement('span'); span.textContent=option;
+        label.appendChild(cb); label.appendChild(span);
         dropdown.appendChild(label);
     });
-
-    const doneBtn = document.createElement('button');
-    doneBtn.textContent = 'Готово';
-    doneBtn.style.cssText = `
-        margin-top:12px;
-        width:100%;
-        padding:10px;
-        font-size:16px;
-        border:none;
-        border-radius:10px;
-        background:#4CAF50;
-        color:white;
-        cursor:pointer;
-        transition: background 0.2s;
-    `;
-    doneBtn.onmouseover = ()=>doneBtn.style.background = '#45a049';
-    doneBtn.onmouseout = ()=>doneBtn.style.background = '#4CAF50';
-    doneBtn.onclick = ()=>{
-        const selected = [];
-        dropdown.querySelectorAll('input:checked').forEach(c=>selected.push(c.value));
-        current.commands = selected;
-        updateCommandsDisplay();
-        updateAllMarkers();
-        dropdown.classList.remove('show');
-        setTimeout(()=>dropdown.remove(),300);
+    const doneBtn=document.createElement('button');
+    doneBtn.textContent='Готово';
+    doneBtn.style.cssText='margin-top:12px;width:100%;padding:10px;font-size:16px;border:none;border-radius:10px;background:#4CAF50;color:white;cursor:pointer;';
+    doneBtn.onmouseover=()=>doneBtn.style.background='#45a049';
+    doneBtn.onmouseout=()=>doneBtn.style.background='#4CAF50';
+    doneBtn.onclick=()=>{
+        const selected=[]; dropdown.querySelectorAll('input:checked').forEach(c=>selected.push(c.value));
+        current.commands=selected; updateCommandsDisplay(); updateAllMarkers();
+        dropdown.classList.remove('show'); setTimeout(()=>dropdown.remove(),300);
     };
-
-    dropdown.appendChild(doneBtn);
-    document.body.appendChild(dropdown);
-    setTimeout(()=>dropdown.classList.add('show'), 10);
+    dropdown.appendChild(doneBtn); document.body.appendChild(dropdown); setTimeout(()=>dropdown.classList.add('show'),10);
 }
 
-// ===== Скрытие/показ панели =====
-function togglePanel(){
-    panelVisible = !panelVisible;
-    if(panelVisible) panel.style.transform = 'translateX(0)';
-    else panel.style.transform = 'translateX(420px)'; 
-}
-
-// ===== Изменение ширины панели мышкой =====
-let isResizing = false;
-resizer.addEventListener('mousedown', e=>{
-    isResizing = true;
-    document.body.style.cursor='ew-resize';
-});
-document.addEventListener('mousemove', e=>{
-    if(!isResizing) return;
-    const newWidth = window.innerWidth - e.clientX - 10;
-    if(newWidth >= 200 && newWidth <= window.innerWidth*0.8){
-        panel.style.width = newWidth + 'px';
-    }
-});
-document.addEventListener('mouseup', e=>{
-    if(isResizing){
-        isResizing = false;
-        document.body.style.cursor='default';
-    }
-});
+// Скрытие/показ панели
+function togglePanel(){panelVisible=!panelVisible; if(panelVisible) panel.style.transform='translateX(0)'; else panel.style.transform='translateX(420px)';}
 </script>
+
 </body>
 </html>
