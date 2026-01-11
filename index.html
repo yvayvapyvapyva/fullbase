@@ -31,19 +31,16 @@ html,body{margin:0;height:100%;font-family:Arial}
     border-bottom:1px solid #ddd;
     cursor:pointer;
     word-break: break-word;
-    white-space: pre-wrap;
 }
 #list div.active{
     background:#d0f5d0;font-weight:bold
 }
 
-textarea, input, button{
+input, button, select{
     width:100%;
     margin-top:5px;
     box-sizing:border-box;
 }
-
-textarea{resize:vertical}
 
 .command-block{
     margin-bottom:5px;
@@ -52,10 +49,7 @@ textarea{resize:vertical}
     border-radius:4px;
     position:relative;
 }
-.command-block textarea{
-    width:100%;
-    height:40px;
-}
+
 .command-block button{
     position:absolute;
     right:3px;
@@ -66,7 +60,7 @@ textarea{resize:vertical}
 }
 
 #cmdContainer{
-    max-height:130px;
+    max-height:150px;
     overflow-y:auto;
 }
 
@@ -120,36 +114,63 @@ let map;
 let points = [];
 let current = null;
 
-// === Задаём токен и Gist ID прямо в коде ===
+/* === GITHUB GIST (ВАРИАНТ 2) === */
 const GITHUB_TOKEN = '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';
 const GIST_ID = 'c4b196bd97194e06592b94646e02118b';
 const GIST_FILENAME = 'all.json';
 
+/* === СПИСОК КОМАНД === */
+const COMMAND_OPTIONS = [
+    'На перекрестке повернем налево',
+    'На перекрестке поедем прямо',
+    'На перекрестке повернем направо',
+    'На перекрестке выполним разворот',
+
+    'На круговом движении первый съезд',
+    'На круговом движении второй съезд',
+    'На круговом движении третий съезд',
+    'На круговом движении четвертый съезд',
+
+    'Выполним разворот вне перекрестка',
+    'Выполним разворот в ближайшем месте',
+
+    'На ближайшем повороте повернем направо',
+    'На ближайшем повороте повернем налево',
+
+    'Найдите место для остановки и остановитесь',
+    'Выполняем остановку параллельно краю проезжей части',
+
+    'Выполняем разгон до максимальной скорости',
+    'Набираем максимальную скорость на данном участке дороги',
+
+    'Выполним разворот в ограниченном пространстве',
+    'Выполним остановку и начало движения на подъеме'
+];
+
 let list, cmdContainer, az, coord;
 
-window.onload = () => {
-    list = document.getElementById('list');
-    cmdContainer = document.getElementById('cmdContainer');
-    az = document.getElementById('az');
-    coord = document.getElementById('coord');
+window.onload=()=>{
+    list=document.getElementById('list');
+    cmdContainer=document.getElementById('cmdContainer');
+    az=document.getElementById('az');
+    coord=document.getElementById('coord');
 };
 
-/* INIT */
+/* INIT MAP */
 ymaps.ready(()=>{
-    map = new ymaps.Map("map", {
+    map=new ymaps.Map("map",{
         center:[56.3399,43.9332],
         zoom:18,
         type:'yandex#satellite',
         controls:[]
     });
 
-    map.events.add('click', e=>{
+    map.events.add('click',e=>{
         addPoint(e.get('coords'));
-        scrollToCurrentPoint();
     });
 });
 
-/* SVG стрелка */
+/* SVG ARROW */
 function arrowSVG(a,color){
     return 'data:image/svg+xml;utf8,'+encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">
@@ -189,7 +210,6 @@ function addPoint(coords){
     points.push(p);
     selectPoint(p);
     renderList();
-    return p;
 }
 
 /* SELECT */
@@ -200,7 +220,6 @@ function selectPoint(p){
     renderList();
     updateMarker(p);
     updateCoord();
-    scrollToCurrentPoint();
 }
 
 /* LIST */
@@ -215,13 +234,6 @@ function renderList(){
     });
 }
 
-function scrollToCurrentPoint(){
-    if(!current) return;
-    const idx=points.indexOf(current);
-    const el=list.children[idx];
-    if(el) el.scrollIntoView({block:'nearest'});
-}
-
 /* COMMANDS */
 function renderCmdContainer(){
     cmdContainer.innerHTML='';
@@ -231,10 +243,23 @@ function renderCmdContainer(){
         const b=document.createElement('div');
         b.className='command-block';
 
-        const t=document.createElement('textarea');
-        t.value=cmd;
-        t.oninput=()=>{
-            current.commands[i]=t.value;
+        const sel=document.createElement('select');
+
+        const empty=document.createElement('option');
+        empty.value='';
+        empty.textContent='— выберите команду —';
+        sel.appendChild(empty);
+
+        COMMAND_OPTIONS.forEach(t=>{
+            const o=document.createElement('option');
+            o.value=t;
+            o.textContent=t;
+            sel.appendChild(o);
+        });
+
+        sel.value=cmd||'';
+        sel.onchange=()=>{
+            current.commands[i]=sel.value;
             renderList();
         };
 
@@ -246,7 +271,7 @@ function renderCmdContainer(){
             renderList();
         };
 
-        b.appendChild(t);
+        b.appendChild(sel);
         b.appendChild(del);
         cmdContainer.appendChild(b);
     });
@@ -333,69 +358,52 @@ function importJSON(){
     i.click();
 }
 
-/* ===== GITHUB GIST ===== */
-
+/* ===== GIST ===== */
 async function updateGist(){
-    if(!GITHUB_TOKEN || !GIST_ID){
-        alert('Не указан токен или Gist ID в коде!');
+    if(!GITHUB_TOKEN){
+        alert('Не указан GitHub token');
         return;
     }
 
-    const data = points.map(p=>({
-        lat:p.lat, lon:p.lon, azimuth:p.azimuth, commands:p.commands
+    const data=points.map(p=>({
+        lat:p.lat,lon:p.lon,azimuth:p.azimuth,commands:p.commands
     }));
 
-    const files = {};
-    files[GIST_FILENAME] = { content: JSON.stringify(data,null,2) };
+    const files={};
+    files[GIST_FILENAME]={content:JSON.stringify(data,null,2)};
 
-    try{
-        const res = await fetch('https://api.github.com/gists/' + GIST_ID, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': 'Bearer ' + GITHUB_TOKEN,
-                'Accept': 'application/vnd.github+json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ files: files })
-        });
-        if(!res.ok) throw new Error(await res.text());
-        alert('Gist обновлён');
-    }catch(e){
-        alert('Ошибка обновления:\n' + e.message);
-    }
+    const res=await fetch('https://api.github.com/gists/'+GIST_ID,{
+        method:'PATCH',
+        headers:{
+            'Authorization':'Bearer '+GITHUB_TOKEN,
+            'Accept':'application/vnd.github+json'
+        },
+        body:JSON.stringify({files})
+    });
+
+    if(res.ok) alert('Gist обновлён');
+    else alert('Ошибка обновления');
 }
 
 async function loadFromGist(){
-    if(!GITHUB_TOKEN || !GIST_ID){
-        alert('Не указан токен или Gist ID в коде!');
-        return;
-    }
+    const res=await fetch('https://api.github.com/gists/'+GIST_ID,{
+        headers:{'Authorization':'Bearer '+GITHUB_TOKEN}
+    });
 
-    try{
-        const res = await fetch('https://api.github.com/gists/' + GIST_ID, {
-            headers: { 'Authorization': 'Bearer ' + GITHUB_TOKEN }
-        });
-        if(!res.ok) throw new Error(await res.text());
+    const gist=await res.json();
+    const arr=JSON.parse(gist.files[GIST_FILENAME].content);
 
-        const gist = await res.json();
-        if(!gist.files[GIST_FILENAME]) throw new Error('route.json не найден');
+    points.forEach(p=>map.geoObjects.remove(p.pm));
+    points=[]; current=null;
 
-        const arr = JSON.parse(gist.files[GIST_FILENAME].content);
+    arr.forEach(p=>{
+        const np=addPoint([p.lat,p.lon]);
+        np.azimuth=p.azimuth||0;
+        np.commands=p.commands?.length?p.commands:[''];
+        updateMarker(np);
+    });
 
-        points.forEach(p=>map.geoObjects.remove(p.pm));
-        points=[]; current=null;
-
-        arr.forEach(p=>{
-            const np=addPoint([p.lat,p.lon]);
-            np.azimuth=p.azimuth||0;
-            np.commands=p.commands?.length?p.commands:[''];
-            updateMarker(np);
-        });
-
-        alert('Маршрут загружен из Gist');
-    }catch(e){
-        alert('Ошибка загрузки:\n' + e.message);
-    }
+    alert('Маршрут загружен');
 }
 </script>
 </body>
