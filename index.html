@@ -8,86 +8,31 @@
 <style>
 html,body{margin:0;height:100%;font-family:'Inter',Arial}
 #map{position:absolute;inset:0}
-
-/* PANEL */
-#panel{
-    position:absolute; right:10px; top:10px;
-    width:360px; max-width:95%;
-    background:rgba(255,255,255,0.28);
-    backdrop-filter:blur(20px);
-    border-radius:16px; padding:16px;
-    z-index:1000;
-    box-shadow:0 10px 30px rgba(0,0,0,0.25);
-    transition:transform .3s ease, opacity .3s ease;
-}
-#panel.collapsed{transform:translateX(110%);opacity:0.3}
-
-/* TOGGLE */
-#panelToggle{
-    position:fixed; top:12px; right:12px;
-    width:44px;height:44px;border-radius:50%;
-    background:linear-gradient(135deg,#4a90e2,#2f80ed);
-    color:white; border:none; cursor:pointer;
-    font-size:22px; z-index:1001;
-    box-shadow:0 4px 12px rgba(0,0,0,0.35);
-}
+#panel{position:absolute; right:10px; top:10px;width:360px;max-width:95%;background:rgba(255,255,255,0.28);backdrop-filter:blur(20px);border-radius:16px;padding:16px;z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,0.25);transition:transform .3s ease, opacity .3s ease;}
+#panel.collapsed{transform:translateX(110%);opacity:0.3;}
+#panelToggle{position:fixed; top:12px; right:12px;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#4a90e2,#2f80ed);color:white;border:none;cursor:pointer;font-size:22px; z-index:1001;box-shadow:0 4px 12px rgba(0,0,0,0.35);}
 #panelToggle:hover{background:linear-gradient(135deg,#6aa6f3,#3f90ff);}
-
-/* UI */
-button,input{
-    margin-top:8px;border-radius:12px;
-    font-size:14px;padding:10px;border:1px solid rgba(0,0,0,0.15);
-    outline:none; transition:all .2s ease;
-}
+button,input{margin-top:8px;border-radius:12px;font-size:14px;padding:10px;border:1px solid rgba(0,0,0,0.15);outline:none; transition:all .2s ease;}
 input:focus{border-color:#2f80ed;box-shadow:0 0 8px rgba(47,128,237,0.4);}
 button{background:#2f80ed;color:white;border:none;cursor:pointer;}
 button.secondary{background:#aaa} button.danger{background:#e74c3c}
-button:hover{opacity:0.85}
-
-/* Azimuth */
+button:hover{opacity:0.85;}
 .az-row{display:flex;gap:8px} .az-row button{height:56px;font-size:20px;flex:1;}
-
-/* Info */
 .info{margin-top:8px;font-size:14px;white-space:pre-line;cursor:pointer;padding:10px;border-radius:12px;background:rgba(0,0,0,0.05);transition:background .2s ease;}
 .info:hover{background:rgba(0,0,0,0.08);}
-
-/* Command dropdown */
-.command-dropdown{
-    position:fixed; right:10px; top:10px;
-    width:360px; max-width:95%; max-height:calc(100vh-20px);
-    background:rgba(255,255,255,0.95);
-    border-radius:16px;padding:8px 16px;
-    box-shadow:0 20px 40px rgba(0,0,0,0.35);
-    overflow:auto; z-index:1500; display:flex; flex-direction:column; transition:opacity .3s ease;
-}
-.command-dropdown label{
-    display:flex; gap:8px; align-items:center;
-    padding:4px 6px;
-    border-radius:8px; cursor:pointer; transition:background .2s ease;
-    font-size:13px;
-}
+.command-dropdown{position:fixed; right:10px; top:10px;width:360px;max-width:95%;max-height:calc(100vh-20px);background:rgba(255,255,255,0.95);border-radius:16px;padding:8px 16px;box-shadow:0 20px 40px rgba(0,0,0,0.35);overflow:auto; z-index:1500; display:flex; flex-direction:column; transition:opacity .3s ease;}
+.command-dropdown label{display:flex; gap:8px; align-items:center; padding:4px 6px; border-radius:8px; cursor:pointer; transition:background .2s ease; font-size:13px;}
 .command-dropdown label:hover{background:rgba(47,128,237,0.08);}
 .command-dropdown input[type=checkbox]{width:16px; height:16px; min-width:16px; min-height:16px;}
-
-/* Buttons in dropdown */
 .cmd-buttons{display:flex;gap:12px;margin-top:12px}
 .cmd-buttons button{flex:1;padding:10px 0;font-weight:bold;border-radius:12px;}
-.cmd-buttons button.secondary{background:#aaa;} .cmd-buttons button:hover{opacity:0.9}
-
-/* Token prompt */
-#tokenPrompt{
-    position:fixed;top:0;left:0;width:100%;height:100%;
-    background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:2000;
-}
-#tokenPrompt div{
-    background:white;padding:24px;border-radius:16px;max-width:90%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.35);
-}
+.cmd-buttons button.secondary{background:#aaa;} .cmd-buttons button:hover{opacity:0.9;}
+#tokenPrompt{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:2000;}
+#tokenPrompt div{background:white;padding:24px;border-radius:16px;max-width:90%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.35);}
 #tokenPrompt input{width:100%;margin-top:12px;}
 #tokenPrompt button{margin-top:12px;width:100%;}
 #tokenMessage{font-weight:bold;}
 #tokenError{color:red;margin-top:8px;font-size:14px;}
-
-/* Custom command row */
 #customCmdRow{display:flex;gap:6px; margin-top:8px;}
 #customCmdRow input{flex:1;} 
 #customCmdRow button{width:60px;}
@@ -140,7 +85,6 @@ button:hover{opacity:0.85}
 </div>
 
 <script>
-// ====== CONFIG ======
 let map, points=[], current=null, userLocationMarker=null;
 let panelCollapsed=false;
 let GITHUB_TOKEN=localStorage.getItem('GITHUB_TOKEN')||'';
@@ -160,12 +104,12 @@ const COMMANDS=[
 ];
 
 const COLOR_PALETTE = [
-    {name:'blue', hex:'#2f80ed'},
-    {name:'red', hex:'#e74c3c'},
-    {name:'yellow', hex:'#f1c40f'},
-    {name:'purple', hex:'#9b59b6'},
-    {name:'teal', hex:'#1abc9c'},
-    {name:'dark', hex:'#34495e'}
+    {name:'blue'},
+    {name:'red'},
+    {name:'yellow'},
+    {name:'purple'},
+    {name:'teal'},
+    {name:'black'}
 ];
 
 // ====== INIT ======
@@ -220,7 +164,7 @@ async function initMap(){
         const paletteDiv = document.querySelector('#colorPalette');
         COLOR_PALETTE.forEach(c=>{
             const btn = document.createElement('button');
-            btn.style.background = c.hex;
+            btn.style.background = c.name;
             btn.title = c.name;
             btn.onclick = ()=>setPointColor(c.name);
             paletteDiv.appendChild(btn);
@@ -257,10 +201,10 @@ function toggleAutoLocation(){
 function round6(n){ return +n.toFixed(6); }
 
 function arrowSVG(a,colorName,selected=false){
-    const hex = COLOR_PALETTE.find(x=>x.name===colorName)?.hex || '#2f80ed';
+    const fill = colorName || 'blue';
     const stroke = selected?'#2ecc71':'black';
     const sw = selected?3:1;
-    return 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><g transform="rotate(${a},20,20)"><polygon points="20,2 28,30 20,24 12,30" fill="${hex}" stroke="${stroke}" stroke-width="${sw}"/></g></svg>`);
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><g transform="rotate(${a},20,20)"><polygon points="20,2 28,30 20,24 12,30" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/></g></svg>`);
 }
 
 function addPoint(c){
